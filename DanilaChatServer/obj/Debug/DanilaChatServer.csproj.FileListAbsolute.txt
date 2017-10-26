@@ -1,0 +1,12 @@
+E:\проекты чата\DanilaChat\DanilaChatServer\bin\Debug\DanilaChatServer.exe.config
+E:\проекты чата\DanilaChat\DanilaChatServer\bin\Debug\DanilaChatServer.exe
+E:\проекты чата\DanilaChat\DanilaChatServer\bin\Debug\DanilaChatServer.pdb
+E:\проекты чата\DanilaChat\DanilaChatServer\obj\Debug\DanilaChatServer.exe
+E:\проекты чата\DanilaChat\DanilaChatServer\obj\Debug\DanilaChatServer.pdb
+E:\проекты чата\DanilaChat\DanilaChatServer\obj\Debug\DanilaChatServer.csprojResolveAssemblyReference.cache
+L:\проекты чата\DanilaChat\DanilaChatServer\bin\Debug\DanilaChatServer.exe.config
+L:\проекты чата\DanilaChat\DanilaChatServer\bin\Debug\DanilaChatServer.exe
+L:\проекты чата\DanilaChat\DanilaChatServer\bin\Debug\DanilaChatServer.pdb
+L:\проекты чата\DanilaChat\DanilaChatServer\obj\Debug\DanilaChatServer.csprojResolveAssemblyReference.cache
+L:\проекты чата\DanilaChat\DanilaChatServer\obj\Debug\DanilaChatServer.exe
+L:\проекты чата\DanilaChat\DanilaChatServer\obj\Debug\DanilaChatServer.pdb
