@@ -11,9 +11,17 @@ namespace DanilaChat
 {
     public class ChatScreen : Form1
     {
+        Human I;
+        Human friend;
+
         Label shadowLabel;
+        int avatarSize;
+
         public ChatScreen(string[] messages, Human I, Human friend)
         {
+            this.I = I;
+            this.friend = friend;
+
             double ratio = 128 / 14.0;
 
             TitleLabel.Text = friend.Name + " " + friend.Surname;
@@ -24,6 +32,7 @@ namespace DanilaChat
             bottomPanel.Height = (int)(Body.Height / ratio);
 
             Body.Controls.Add(bottomPanel);
+            avatarSize = (int)(bottomPanel.Height / 1.5);
 
             shadowLabel = new Label();
             shadowLabel.Text = "Ваше сообщение...";
@@ -38,6 +47,7 @@ namespace DanilaChat
             textBox.Font = chatFont;
             textBox.Multiline = true;
             textBox.KeyDown += TextBox_KeyDown;
+            textBox.KeyUp += TextBox_KeyUp;
             textBox.TextChanged += TextBox_TextChanged;
             textBox.BorderStyle = BorderStyle.None;
             
@@ -97,7 +107,6 @@ namespace DanilaChat
 
                 AvatarBox avatar = new AvatarBox();
                 avatar.SizeMode = PictureBoxSizeMode.StretchImage;
-                int avatarSize = (int)(bottomPanel.Height / 1.5);
                 avatar.Size = new Size(avatarSize, avatarSize);
 
                 Panel messagePanel = new Panel();
@@ -162,12 +171,28 @@ namespace DanilaChat
             }
         }
 
+ 
+
         private void TextBox_TextChanged(object sender, EventArgs e)
         {
             TextBox textBox = (TextBox)sender;
 
+            //MessageBox.Show(textBox.Text.Length.ToString());
+
             if (textBox.TextLength == 0) shadowLabel.Show();
             else shadowLabel.Hide(); 
+        }
+
+        private void TextBox_KeyUp(object sender, KeyEventArgs e)
+        {
+            TextBox textBox = (TextBox)sender;
+
+            if (e.KeyCode == Keys.Enter)
+            {
+                if (e.Shift) return;
+                textBox.Text = "";
+
+            }
         }
 
         private void TextBox_KeyDown(object sender, KeyEventArgs e)
@@ -177,10 +202,85 @@ namespace DanilaChat
             if (e.KeyCode == Keys.Enter)
             {
                 if (e.Shift) return;
-
+                
+                string messageText = textBox.Text;
                 textBox.Text = "";
+
+                ShowMessage(messageText);
+                /*
+                ClientSocketHandler.SendToServer
+                    ("Message " + friend.UserId + " " + messageText);
+                */
             }
             
+        }
+
+        void ShiftTopControl(int shift)
+        {
+            for (int i = Body.Controls.Count - 2; i > 1; i--)
+            {
+                Body.Controls[i].Top -= shift;
+            }
+        }
+
+        void ShowMessage(string text)
+        {
+            Label messageLabel = new Label();
+            messageLabel.ForeColor = Color.Black;
+            messageLabel.AutoSize = true;
+            messageLabel.Text = text;
+            messageLabel.Font = chatFont;
+            int padding = 10;
+
+            AvatarBox avatar = new AvatarBox();
+            avatar.SizeMode = PictureBoxSizeMode.StretchImage;
+            avatar.Size = new Size(avatarSize, avatarSize);
+
+            Panel messagePanel = new Panel();
+            messagePanel.Controls.Add(messageLabel);
+
+            int paddingContainer = (int)(padding / 2.0);
+            Panel containerPanel = new Panel();
+
+            containerPanel.Controls.Add(avatar);
+            containerPanel.Controls.Add(messagePanel);
+            Body.Controls.Add(containerPanel);
+
+            Size messageSize = messageLabel.Size;
+            messagePanel.Size = new Size
+                (messageSize.Width + 2 * padding,
+                messageSize.Height + 2 * padding);
+            messagePanel.Padding = new Padding(padding);
+
+            BunifuElipse ellipse = new BunifuElipse();
+            ellipse.TargetControl = messagePanel;
+            ellipse.ElipseRadius = padding;
+
+
+            containerPanel.Size = new Size
+                (Body.Width, messagePanel.Height + 2 * paddingContainer);
+            // containerPanel.Padding = new Padding(paddingContainer);
+
+            Control eventPanel = Body.Controls[1];
+            containerPanel.Location = new Point
+                (0, eventPanel.Top - containerPanel.Height);
+
+
+            int avatarPadding = (int)(avatarSize / 5.0);
+
+            
+            int leftMessage = Body.Width - 2 * avatarPadding
+                - avatarSize - messagePanel.Width;
+            messagePanel.Location = new Point(leftMessage, paddingContainer);
+            messagePanel.BackColor = Color.FromArgb(212, 231, 250);
+
+            avatar.Location = new Point(messagePanel.Right + avatarPadding,
+                containerPanel.Height - avatarSize - paddingContainer);
+
+            if (I.Avatar == null)
+                avatar.Image = Properties.Resources.AvatarDefault;
+
+            ShiftTopControl(containerPanel.Height);
         }
 
         List<string> PrepareListString(string[] messages)

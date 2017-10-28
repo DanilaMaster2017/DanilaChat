@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 
 namespace DanilaChat
 {
-    public class ClientSocketHandler
+    public static class ClientSocketHandler
     {
-        Socket client;
+        static Socket client;
 
-        public ClientSocketHandler()
+        static ClientSocketHandler()
         {
             if (client != null)
             {
@@ -31,14 +31,14 @@ namespace DanilaChat
             client.Connect(point);
         }
 
-        public void SendToServer(string query)
+        public static void SendToServer(string query)
         {
             byte[] buffer = new byte[query.Length * 2];
             Encoding.Unicode.GetBytes(query, 0, query.Length, buffer, 0);
             client.Send(buffer);
         }
 
-        public string WaitReciveFromServer()
+        public static string WaitReciveFromServer()
         {
             byte[] answer = new byte[8192];
 

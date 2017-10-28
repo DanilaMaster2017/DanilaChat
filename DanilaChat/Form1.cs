@@ -22,8 +22,6 @@ namespace DanilaChat
 
         Human I;
 
-        ClientSocketHandler ClientSocket;
-
         BunifuMetroTextbox loginTextBox;
         BunifuMetroTextbox passwordTextBox;
 
@@ -215,13 +213,13 @@ namespace DanilaChat
         bool visibleErrorLogin = false;
         private void LoginButton_Click(object sender, EventArgs e)
         {
-            ClientSocket = new ClientSocketHandler();
             string login = loginTextBox.Text;
             string password = passwordTextBox.Text;
 
-            ClientSocket.SendToServer("Login " + login + " " + password);
+            ClientSocketHandler.SendToServer("Login " + login + " " + password);
             List<string> answerFromServer = new List<string>();
-            answerFromServer.AddRange(ClientSocket.WaitReciveFromServer().Split());
+            answerFromServer.AddRange(
+                ClientSocketHandler.WaitReciveFromServer().Split());
 
             //MessageBox.Show(answerFromServer[0]);
             //MessageBox.Show(answerFromServer[1]);
@@ -416,9 +414,9 @@ namespace DanilaChat
                 id2 = temp;
             }
              
-            ClientSocket.SendToServer("Read " + id1 + " " + id2);
+            ClientSocketHandler.SendToServer("Read " + id1 + " " + id2);
 
-            string answerFromServer = ClientSocket.WaitReciveFromServer();
+            string answerFromServer = ClientSocketHandler.WaitReciveFromServer();
             string[] answer = answerFromServer.Split();
 
             ChatScreen chatScreen = new ChatScreen(answer, I, friend[number]);
