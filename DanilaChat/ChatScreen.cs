@@ -92,82 +92,15 @@ namespace DanilaChat
             
             Body.Controls.Add(eventPanel);
 
-            List<string> listMessage = PrepareListString(messages);
-            int begIndex = listMessage.Count - 1;
+            List<string> listMessage = PrepareString(messages);
+            bool iSender;
 
             for(int i = 0;  i < listMessage.Count / 3; i++)
             {
-                
-                Label messageLabel = new Label();
-                messageLabel.ForeColor = Color.Black;
-                messageLabel.AutoSize = true;
-                messageLabel.Text = listMessage[begIndex - 1 - 3 * i];
-                messageLabel.Font = chatFont;
-                int padding = 10;
+                iSender = (int.Parse(listMessage[3 * i]) == I.UserId) ?
+                    true : false;
 
-                AvatarBox avatar = new AvatarBox();
-                avatar.SizeMode = PictureBoxSizeMode.StretchImage;
-                avatar.Size = new Size(avatarSize, avatarSize);
-
-                Panel messagePanel = new Panel();
-                messagePanel.Controls.Add(messageLabel);
-
-                int paddingContainer = (int)(padding / 2.0);
-                Panel containerPanel = new Panel();
-
-                containerPanel.Controls.Add(avatar);
-                containerPanel.Controls.Add(messagePanel);
-                Body.Controls.Add(containerPanel);
-
-                Size messageSize = messageLabel.Size;
-                messagePanel.Size = new Size
-                    (messageSize.Width + 2 * padding,
-                    messageSize.Height + 2 * padding);
-                messagePanel.Padding = new Padding(padding);
-
-                BunifuElipse ellipse = new BunifuElipse();
-                ellipse.TargetControl = messagePanel;
-                ellipse.ElipseRadius = padding;
-
-                
-                                containerPanel.Size = new Size
-                    (Body.Width, messagePanel.Height + 2 * paddingContainer);
-               // containerPanel.Padding = new Padding(paddingContainer);
-
-                Control lastControl = Body.Controls[Body.Controls.Count - 2];
-                containerPanel.Location = new Point
-                    (0, lastControl.Top - containerPanel.Height);
-
-   
-                
-                int avatarPadding = (int)(avatarSize / 5.0);
-
-                if (friend.UserId == int.Parse(listMessage[begIndex - 2 - 3 * i]))
-                {
-                    avatar.Location = new Point(avatarPadding, 
-                        containerPanel.Height - avatarSize - paddingContainer);
-
-                    if (friend.Avatar == null)
-                        avatar.Image = Properties.Resources.AvatarDefault;
-
-                    int leftMessage = avatar.Right + avatarPadding;
-                    messagePanel.Location = new Point(leftMessage, paddingContainer);
-                    messagePanel.BackColor = Color.White;
-                }
-                else
-                {
-                    int leftMessage = Body.Width - 2 * avatarPadding
-                        - avatarSize - messagePanel.Width;
-                    messagePanel.Location = new Point(leftMessage, paddingContainer);
-                    messagePanel.BackColor = Color.FromArgb(212, 231, 250);
-
-                    avatar.Location = new Point(messagePanel.Right + avatarPadding,
-                        containerPanel.Height - avatarSize -paddingContainer);
-
-                    if (I.Avatar == null)
-                        avatar.Image = Properties.Resources.AvatarDefault;
-                    
-                }
+                ShowMessage(listMessage[1 + 3 * i], iSender);
             }
         }
 
@@ -176,8 +109,6 @@ namespace DanilaChat
         private void TextBox_TextChanged(object sender, EventArgs e)
         {
             TextBox textBox = (TextBox)sender;
-
-            //MessageBox.Show(textBox.Text.Length.ToString());
 
             if (textBox.TextLength == 0) shadowLabel.Show();
             else shadowLabel.Hide(); 
@@ -206,11 +137,7 @@ namespace DanilaChat
                 string messageText = textBox.Text;
                 textBox.Text = "";
 
-                ShowMessage(messageText);
-                /*
-                ClientSocketHandler.SendToServer
-                    ("Message " + friend.UserId + " " + messageText);
-                */
+                ShowMessage(messageText, true);
             }
             
         }
@@ -223,9 +150,11 @@ namespace DanilaChat
             }
         }
 
-        void ShowMessage(string text)
+        void ShowMessage(string text, bool iSender)
         {
-            Label messageLabel = new Label();
+            text = LinesFromMessage(text);
+
+            Label messageLabel = new Label(); 
             messageLabel.ForeColor = Color.Black;
             messageLabel.AutoSize = true;
             messageLabel.Text = text;
@@ -268,64 +197,97 @@ namespace DanilaChat
 
             int avatarPadding = (int)(avatarSize / 5.0);
 
-            
-            int leftMessage = Body.Width - 2 * avatarPadding
-                - avatarSize - messagePanel.Width;
-            messagePanel.Location = new Point(leftMessage, paddingContainer);
-            messagePanel.BackColor = Color.FromArgb(212, 231, 250);
 
-            avatar.Location = new Point(messagePanel.Right + avatarPadding,
-                containerPanel.Height - avatarSize - paddingContainer);
+            if (!iSender)
+            {
+                avatar.Location = new Point(avatarPadding,
+                    containerPanel.Height - avatarSize - paddingContainer);
 
-            if (I.Avatar == null)
-                avatar.Image = Properties.Resources.AvatarDefault;
+                if (friend.Avatar == null)
+                    avatar.Image = Properties.Resources.AvatarDefault;
+
+                int leftMessage = avatar.Right + avatarPadding;
+                messagePanel.Location = new Point(leftMessage, paddingContainer);
+                messagePanel.BackColor = Color.White;
+            }
+            else
+            {
+                int leftMessage = Body.Width - 2 * avatarPadding
+                    - avatarSize - messagePanel.Width;
+                messagePanel.Location = new Point(leftMessage, paddingContainer);
+                messagePanel.BackColor = Color.FromArgb(212, 231, 250);
+
+                avatar.Location = new Point(messagePanel.Right + avatarPadding,
+                    containerPanel.Height - avatarSize - paddingContainer);
+
+                if (I.Avatar == null)
+                    avatar.Image = Properties.Resources.AvatarDefault;
+
+            }
 
             ShiftTopControl(containerPanel.Height);
         }
 
-        List<string> PrepareListString(string[] messages)
+        string LinesFromMessage(string message)
+        {
+            string[] words = message.Split(' ');
+            int countSymbolInRow = 0;
+            message = "";
+
+            for(int i = 0; i < words.Length; i++)
+            {                
+                if (countSymbolInRow + words[i].Length > 28)
+                {
+                    countSymbolInRow = 0;
+                    message += "\n";
+                }
+
+                countSymbolInRow += words[i].Length + 1;
+                message += words[i] + " ";
+            }
+            message = message.Remove(message.Length - 1);
+
+            return message;
+        }
+
+        List<string> PrepareString(string[] messages)
         {
             List<string> returnValue = new List<string>();
-            int insideIdex = 1;
+            int insideIndex = 1;
 
-            while (insideIdex < messages.Length - 1)
+            string message;
+            bool notEnd;
+
+            while (insideIndex < messages.Length - 1)
             {
-                returnValue.Add(messages[insideIdex - 1]);
+                returnValue.Add(messages[insideIndex - 1]);
 
-                string message = "";
-                int countSymbolInRow = 0;
+                message = "";
+                notEnd = true;
 
-
-                bool notEnd = true;
                 while (notEnd)
-                {
-                    if (messages[insideIdex].Contains("#EndMessage#"))
+                { 
+                    if (messages[insideIndex].Contains("#EndMessage#"))
                     {
                         notEnd = false;
-                        messages[insideIdex] =
-                            messages[insideIdex].Replace("#EndMessage#", "");
+                        messages[insideIndex] =
+                            messages[insideIndex].Replace("#EndMessage#", "");
                     }
-
-                    if (countSymbolInRow + messages[insideIdex].Length > 28)
-                    {
-                        countSymbolInRow = 0;
-                        message += "\n";
-                    }
-
-                    countSymbolInRow += messages[insideIdex].Length + 1;
-                    message += messages[insideIdex] + " ";
-                    insideIdex++;
-                }
+                    message += messages[insideIndex] + " ";
+                    insideIndex++;
+                }  
+                                             
                 message = message.Remove(message.Length - 1);
                 returnValue.Add(message);
 
-                returnValue.Add(messages[insideIdex] + " "
-                    + messages[insideIdex + 1]);
+                returnValue.Add(messages[insideIndex] + " "
+                    + messages[insideIndex + 1]);
 
-                insideIdex += 3;
+                insideIndex += 3;
             }
 
             return returnValue;
         }
     }
 }
+
