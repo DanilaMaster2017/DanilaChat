@@ -21,11 +21,13 @@ namespace DanilaChatServer
         static string selectUserString = "SELECT * FROM ListChatUser WHERE UserId = ?";
         static string readListString = "SELECT * FROM ListOfConversation_{0}";
         static string readConversationString = "SELECT * FROM Conversation_{0}_{1}";
+        static string messageString = "Insert into Conversation_{0}_{1} (UserId, Message) Values (?, ?)";
 
         static OleDbCommand loginCommand = new OleDbCommand();
         static OleDbCommand readListCommand = new OleDbCommand();
         static OleDbCommand selectUserCommand = new OleDbCommand();
         static OleDbCommand readConversationCommand = new OleDbCommand();
+        static OleDbCommand messageCommand = new OleDbCommand();
 
         public DataBaseConnector()
         {
@@ -45,10 +47,14 @@ namespace DanilaChatServer
             selectUserCommand.CommandText = selectUserString;
             selectUserCommand.Parameters.Add("@Id", OleDbType.Integer);
 
+            messageCommand.Connection = conectionDBChat;
+            messageCommand.Parameters.Add("@Id", OleDbType.Integer);
+            messageCommand.Parameters.Add("@Message", OleDbType.LongVarWChar);
+
             //Console.WriteLine("Yes");
         }
 
-        public static List<string> LoginChat(string login, string password, Human user)
+        public static List<string> LoginChat(string login, string password,  Human user)
         {
             List<string> answer = new List<string>();
 
@@ -155,6 +161,28 @@ namespace DanilaChatServer
 
             readConversation.Close();
             return answer;
+        }
+
+        static public void SendingMessage(int senderId, int reciverId, string message)
+        {
+            messageCommand.Parameters[0].Value = senderId;
+            messageCommand.Parameters[1].Value = message;
+
+            int id1, id2;
+
+            if (senderId < reciverId)
+            {
+                id1 = senderId;
+                id2 = reciverId;
+            }
+            else
+            {
+                id2 = senderId;
+                id1 = reciverId;
+            }
+
+            messageCommand.CommandText = string.Format(messageString, id1, id2);
+            messageCommand.ExecuteNonQuery();
         }
 
         static int SearchUserByLogin()

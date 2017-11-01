@@ -17,10 +17,17 @@ namespace DanilaChat
 {
     public partial class Form1 : Form
     {
-        Dictionary<int, ChatScreen> OpenDialog = 
+        static Dictionary<int, ChatScreen> openDialog =
             new Dictionary<int, ChatScreen>();
 
-        Human I;
+        public static Dictionary<int, ChatScreen> OpenDialog
+        {
+            get { return openDialog; }
+            set { openDialog = value; }
+        }        
+
+        protected static Human I { get; set; }
+        static Dictionary<int, Human> friend = new Dictionary<int, Human>();
 
         BunifuMetroTextbox loginTextBox;
         BunifuMetroTextbox passwordTextBox;
@@ -40,6 +47,11 @@ namespace DanilaChat
         Size textBoxSize = new Size(170, 32);
         int textBoxBorder = 1;
         Padding textBoxPadding = new Padding(5);
+
+        public static Human GetFriendAtId(int id)
+        {
+            return friend[id];
+        }
 
         public Form1()
         {
@@ -278,10 +290,10 @@ namespace DanilaChat
             BorderPanel.Controls.Add(MessagePanel);
         }
 
-        Dictionary<int, Human> friend = new Dictionary<int, Human>();
 
         void ShowListOfConversation(int countConversation, List<string> answer)
-        {            
+        {       
+                 
             TitleLabel.Text = "10 друзей онлайн";
             answer.RemoveAt(0);
             answer.RemoveAt(0);
@@ -384,6 +396,7 @@ namespace DanilaChat
                 conversationPanel.Click += ConversationPanel_Click;
                 completeName.Click += ConversationPanel_Click;
             }
+            ClientSocketHandler.BeginRecive();
         }
 
         private void ConversationPanel_Click(object sender, EventArgs e)
@@ -414,14 +427,13 @@ namespace DanilaChat
                 id2 = temp;
             }
              
-            ClientSocketHandler.SendToServer("Read " + id1 + " " + id2);
+            ClientSocketHandler.SendToServer("Read " + id1 + " " + id2);         
+        }
 
-            string answerFromServer = ClientSocketHandler.WaitReciveFromServer();
-            string[] answer = answerFromServer.Split();
-
-            ChatScreen chatScreen = new ChatScreen(answer, I, friend[number]);
-            chatScreen.Show();
-            OpenDialog[number] = chatScreen;
+        void ShowChatScreen(object sender, EventArgs e)
+        {
+            ChatScreen cScreen = new ChatScreen(new string[] { "3", "yu suka#EndMessage#", "дата", "время" }, friend[1]);
+            cScreen.Show();
         }
 
         SolidBrush brush = new SolidBrush(Color.White);

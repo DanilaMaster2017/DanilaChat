@@ -11,6 +11,11 @@ namespace DanilaChatServer
 {
     class DataSocket
     {
+        public DataSocket()
+        {
+            User = new Human();
+        }
+
         public Human User { get; set; }
 
         const int BUFFER_SIZE = 1024;

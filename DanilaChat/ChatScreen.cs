@@ -11,15 +11,13 @@ namespace DanilaChat
 {
     public class ChatScreen : Form1
     {
-        Human I;
         Human friend;
 
         Label shadowLabel;
         int avatarSize;
 
-        public ChatScreen(string[] messages, Human I, Human friend)
+        public ChatScreen(string[] messages, Human friend)
         {
-            this.I = I;
             this.friend = friend;
 
             double ratio = 128 / 14.0;
@@ -138,6 +136,8 @@ namespace DanilaChat
                 textBox.Text = "";
 
                 ShowMessage(messageText, true);
+
+                ClientSocketHandler.SendToServer("Message " + friend.UserId + " " + messageText);
             }
             
         }
@@ -150,7 +150,7 @@ namespace DanilaChat
             }
         }
 
-        void ShowMessage(string text, bool iSender)
+        public void ShowMessage(string text, bool iSender)
         {
             text = LinesFromMessage(text);
 
