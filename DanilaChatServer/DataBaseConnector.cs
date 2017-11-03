@@ -21,13 +21,28 @@ namespace DanilaChatServer
         static string selectUserString = "SELECT * FROM ListChatUser WHERE UserId = ?";
         static string readListString = "SELECT * FROM ListOfConversation_{0}";
         static string readConversationString = "SELECT * FROM Conversation_{0}_{1}";
-        static string messageString = "Insert into Conversation_{0}_{1} (UserId, Message) Values (?, ?)";
+        static string messageString = "INSERT INTO Conversation_{0}_{1} (UserId, Message) Values (?, ?)";
+        static string regestrationString = "INSERT INTO ListChatUser "
+            + "(UserLogin, Password, Name, Surname, BrithDay, Gender) " 
+            + "Values (?, ?, ?, ?, ?, ?)";
+        static string createConversationsString =
+            "CREATE TABLE ListOfConversation_{0}( "
+            + "UserId int NOT NULL "
+            + "CONSTRAINT FK_ListOfConversation_{0}_UserId FOREIGN KEY(UserId) "
+            + "REFERENCES ListChatUser(UserId) "
+            + "ON UPDATE CASCADE "
+            + "ON DELETE CASCADE, "
+            + "NumberOfUnread int NOT NULL "
+            + "CONSTRAINT DF_ListOfConversation_{0}_NumberOfUnread "
+            + "DEFAULT (0) ); ";
 
         static OleDbCommand loginCommand = new OleDbCommand();
         static OleDbCommand readListCommand = new OleDbCommand();
         static OleDbCommand selectUserCommand = new OleDbCommand();
         static OleDbCommand readConversationCommand = new OleDbCommand();
         static OleDbCommand messageCommand = new OleDbCommand();
+        static OleDbCommand regestrationCommand = new OleDbCommand();
+        static OleDbCommand createConversationsCommand = new OleDbCommand();
 
         public DataBaseConnector()
         {
@@ -50,6 +65,18 @@ namespace DanilaChatServer
             messageCommand.Connection = conectionDBChat;
             messageCommand.Parameters.Add("@Id", OleDbType.Integer);
             messageCommand.Parameters.Add("@Message", OleDbType.LongVarWChar);
+
+            regestrationCommand.Connection = conectionDBChat;
+            regestrationCommand.CommandText = regestrationString;
+            regestrationCommand.Parameters.Add("@Login", OleDbType.VarChar, 50);
+            regestrationCommand.Parameters.Add("@Password", OleDbType.VarChar, 50);
+            regestrationCommand.Parameters.Add("@Name", OleDbType.VarWChar, 50);
+            regestrationCommand.Parameters.Add("@Surname", OleDbType.VarWChar, 50);
+            regestrationCommand.Parameters.Add("@BrithDay", OleDbType.Date);
+            regestrationCommand.Parameters.Add("@Gender", OleDbType.VarChar, 8);
+
+            createConversationsCommand.Connection = conectionDBChat;
+
 
             //Console.WriteLine("Yes");
         }
@@ -183,6 +210,43 @@ namespace DanilaChatServer
 
             messageCommand.CommandText = string.Format(messageString, id1, id2);
             messageCommand.ExecuteNonQuery();
+        }
+
+        static public List<string> RegestrationUser(string[] query)
+        {
+            List<string> answer = new List<string>();
+
+            string login = query[1];
+            string password = query[2];
+            string name = query[4];
+            string surname = query[5];
+            DateTime brithDay = DateTime.Parse(query[6] + " " + query[7]);
+            string gender = query[8];
+
+            regestrationCommand.Parameters[0].Value = login;
+            regestrationCommand.Parameters[1].Value = password;
+            regestrationCommand.Parameters[2].Value = name;
+            regestrationCommand.Parameters[3].Value = surname;
+            regestrationCommand.Parameters[4].Value = brithDay.Date;
+            regestrationCommand.Parameters[5].Value = gender;
+
+            int count = regestrationCommand.ExecuteNonQuery();
+
+            if (count == 0)
+            {
+                answer.Add("Invalid");
+                return answer;
+            }
+
+            loginCommand.Parameters[0].Value = login;
+            int id = (int)loginCommand.ExecuteScalar();
+
+            createConversationsCommand.CommandText =
+                string.Format(createConversationsString, id);
+            createConversationsCommand.ExecuteNonQuery();
+            answer.Add("Ok " + id);
+
+            return answer;
         }
 
         static int SearchUserByLogin()

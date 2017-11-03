@@ -83,6 +83,10 @@ namespace DanilaChatServer
                             (UsersOnline[receiver], data.User.UserId, message);
                     break;
 
+                case "Regestration":
+                    answerDB = DataBaseConnector.RegestrationUser(parametrs);
+                    break;
+
 
 
                 default :
