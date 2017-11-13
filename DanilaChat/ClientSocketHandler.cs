@@ -54,8 +54,6 @@ namespace DanilaChat
 
         static void ReciveFromServer(IAsyncResult result)
         {
-            List<string> answerDB = null;
-
             client.EndReceive(result);
 
             string query = Encoding.Unicode.GetString(buffer);
@@ -83,9 +81,6 @@ namespace DanilaChat
 
                     index = parametrs[0].Length + parametrs[1].Length + 2;
                     string messages = query.Substring(index);
-                    // createChatScreen( new string[] { "3","yu suka#EndMessage#", "дата", "время"}, friend);
-
-                    
 
                    // ChatScreen chatScreen = new ChatScreen(messages.Split(), friend);
                     //chatScreen.ShowDialog();
@@ -98,6 +93,25 @@ namespace DanilaChat
                         });
                     
                     break;
+
+                case "Select":
+                    query = query.Substring(7);
+                    Form1.AddScreen.ShowUsers(query.Split());
+                    break;
+
+                case "AddFriend":
+                    Human newFriend = new Human();
+                    newFriend = Human.Parse(parametrs, 1);
+
+                    Program.MainChatWindow.
+                        ShowConversationPanel(newFriend);
+                    break;
+
+                case "AddedSuccessfull":
+                    Program.MainChatWindow.
+                        ShowConversationPanel(Form1.AddFriend);
+                    break;
+
 
 
                 default:
@@ -121,12 +135,7 @@ namespace DanilaChat
             
         }
 
-        public static void createChatScreen(string[] messages, Human friend)
-        {
-            
-
-            
-        }
+        
         public static void BeginRecive()
         {
             buffer = new byte[8192];

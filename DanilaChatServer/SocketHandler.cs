@@ -19,6 +19,9 @@ namespace DanilaChatServer
 
         static Dictionary<int, DataSocket> UsersOnline = 
             new Dictionary<int, DataSocket>();
+
+        static Dictionary<int, int> createFriendship =
+            new Dictionary<int, int>();
         
 
         public static void HandlerAccept(IAsyncResult result)
@@ -40,7 +43,18 @@ namespace DanilaChatServer
             List<string> answerDB = null;
 
             DataSocket data = (DataSocket)result.AsyncState;
-            data.ClientConnection.EndReceive(result);
+
+            try
+            {
+                data.ClientConnection.EndReceive(result);
+            }
+            catch
+            {
+                UsersOnline.Remove(data.User.UserId);
+                data.ClientConnection.Close();
+                return;
+            }
+            
 
             Console.WriteLine("Recive");
 
@@ -67,6 +81,10 @@ namespace DanilaChatServer
                     answerDB = DataBaseConnector.ReadConversation(id1, id2);
 
                     int friendId = (id1 == data.User.UserId) ? id2 : id1;
+                    if (answerDB.Count == 0)
+                    {
+                        answerDB.Add("Conversation " + friendId);
+                    }
                     answerDB[0] = "Conversation " + friendId + " " + answerDB[0];
                     break;
 
@@ -79,12 +97,53 @@ namespace DanilaChatServer
                         (data.User.UserId, receiver, message);
 
                     if (UsersOnline.ContainsKey(receiver))
-                        sendingOnlineMessage
+                        SendingOnlineMessage
                             (UsersOnline[receiver], data.User.UserId, message);
                     break;
 
                 case "Regestration":
                     answerDB = DataBaseConnector.RegestrationUser(parametrs);
+                    break;
+
+                case "Select":
+                    answerDB = DataBaseConnector.SelectUsers(int.Parse(parametrs[1]));
+                    answerDB[0] = "Select " + answerDB[0];
+                    break;
+
+                case "AddFriend":
+                    int senderId = data.User.UserId;
+                    int receiverId = int.Parse(parametrs[1]);
+
+                    if ((createFriendship.ContainsKey(receiverId))
+                        && (createFriendship[receiverId] == senderId)) break;
+
+                    createFriendship[senderId] = receiverId;
+                    int Id1, Id2;
+
+                    if (senderId > receiverId)
+                    {
+                        Id1 = receiverId;
+                        Id2 = senderId;
+                    }
+                    else
+                    {
+                        Id2 = receiverId;
+                        Id1 = senderId;
+                    }
+
+                    if (!DataBaseConnector.CreateFriendship(Id1, Id2))
+                    {
+                        createFriendship.Remove(senderId);
+                        break;
+                    }
+
+                    if (UsersOnline.ContainsKey(receiverId))
+                    {
+                        SendingNewFriend(UsersOnline[receiverId], data.User); 
+                    }
+
+                    AddedSuccessfull(data);
+                    createFriendship.Remove(senderId);
                     break;
 
 
@@ -113,7 +172,7 @@ namespace DanilaChatServer
             data.ClientConnection.BeginReceive(data.Buffer, 0, 1024, SocketFlags.None, ReciveFromClient, data);
         }
 
-        static void sendingOnlineMessage
+        static void SendingOnlineMessage
             (DataSocket receiverSocket, int idSender, string message)
         {
             string answer = "Message " + idSender + " " + message;
@@ -121,6 +180,22 @@ namespace DanilaChatServer
             byte[] answerSocket = Encoding.Unicode.GetBytes(answer);
             receiverSocket.ClientConnection.Send(answerSocket);
         
+        }
+
+        static void SendingNewFriend(DataSocket receiverSocket, Human newFriend)
+        {
+            string answer = "AddFriend " + newFriend;
+
+            byte[] answerSocket = Encoding.Unicode.GetBytes(answer);
+            receiverSocket.ClientConnection.Send(answerSocket);
+        }
+
+        static void AddedSuccessfull(DataSocket client)
+        {
+            string answer = "AddedSuccessfull";
+
+            byte[] answerSocket = Encoding.Unicode.GetBytes(answer);
+            client.ClientConnection.Send(answerSocket);
         }
     }
 }

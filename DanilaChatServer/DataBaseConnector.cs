@@ -21,10 +21,13 @@ namespace DanilaChatServer
         static string selectUserString = "SELECT * FROM ListChatUser WHERE UserId = ?";
         static string readListString = "SELECT * FROM ListOfConversation_{0}";
         static string readConversationString = "SELECT * FROM Conversation_{0}_{1}";
-        static string messageString = "INSERT INTO Conversation_{0}_{1} (UserId, Message) Values (?, ?)";
+        static string messageString = 
+            "INSERT INTO Conversation_{0}_{1} (UserId, Message) Values (?, ?)";
+
         static string regestrationString = "INSERT INTO ListChatUser "
             + "(UserLogin, Password, Name, Surname, BrithDay, Gender) " 
             + "Values (?, ?, ?, ?, ?, ?)";
+
         static string createConversationsString =
             "CREATE TABLE ListOfConversation_{0}( "
             + "UserId int NOT NULL "
@@ -36,6 +39,34 @@ namespace DanilaChatServer
             + "CONSTRAINT DF_ListOfConversation_{0}_NumberOfUnread "
             + "DEFAULT (0) ); ";
 
+        static string selectString = 
+            "WITH ResultSet ( [RowNumber], [UserId], [UserLogin], "
+            + "[Password], [Name], [Surname], [BrithDay], [Gender], [Avatar]) "
+            + "AS( SELECT ROW_NUMBER() OVER(ORDER BY Surname), "
+            + "* FROM ListChatUser ) "
+            + "SELECT[UserId], [UserLogin], [Password], [Name], "
+            + "[Surname], [BrithDay], [Gender], [Avatar] "
+            + "FROM ResultSet WHERE RowNumber BETWEEN {0} AND {1}";
+
+        static string addFriendString = 
+            "INSERT INTO ListOfConversation_{0} (UserId) Values (?)";
+
+        static string createConversationString =
+          "CREATE TABLE[dbo].[Conversation_{0}_{1}] "
+          + "( [UserId] [int] NOT NULL "
+          + "CONSTRAINT FK_Conversation_{0}_{1}_UserId "
+          + "FOREIGN KEY(UserId) "
+          + "REFERENCES ListChatUser(UserId) "
+          + "ON UPDATE CASCADE "
+          + "ON DELETE CASCADE, "
+          + "[Message] [nvarchar] (4000) NOT NULL, "
+          + "[TimeDispatch] [datetime] NOT NULL "
+          + "CONSTRAINT DF_Conversation_{0}_{1}_UserId "
+          + "DEFAULT (getdate())) ";
+
+        static string checkFriendString = 
+            "Select UserId FROM ListOfConversation_{0} WHERE UserId = ?";
+
         static OleDbCommand loginCommand = new OleDbCommand();
         static OleDbCommand readListCommand = new OleDbCommand();
         static OleDbCommand selectUserCommand = new OleDbCommand();
@@ -43,6 +74,10 @@ namespace DanilaChatServer
         static OleDbCommand messageCommand = new OleDbCommand();
         static OleDbCommand regestrationCommand = new OleDbCommand();
         static OleDbCommand createConversationsCommand = new OleDbCommand();
+        static OleDbCommand selectCommand = new OleDbCommand();
+        static OleDbCommand addFriendCommand = new OleDbCommand();
+        static OleDbCommand createConversationCommand = new OleDbCommand();
+        static OleDbCommand checkFriendCommand = new OleDbCommand();
 
         public DataBaseConnector()
         {
@@ -77,7 +112,15 @@ namespace DanilaChatServer
 
             createConversationsCommand.Connection = conectionDBChat;
 
+            selectCommand.Connection = conectionDBChat;
 
+            addFriendCommand.Connection = conectionDBChat;
+            addFriendCommand.Parameters.Add("@Id", OleDbType.Integer);
+
+            createConversationCommand.Connection = conectionDBChat;
+
+            checkFriendCommand.Connection = conectionDBChat;
+            checkFriendCommand.Parameters.Add("@Id", OleDbType.Integer);
             //Console.WriteLine("Yes");
         }
 
@@ -247,6 +290,57 @@ namespace DanilaChatServer
             answer.Add("Ok " + id);
 
             return answer;
+        }
+
+        public static List<string> SelectUsers(int beginIndex)
+        {
+            List<string> answer = new List<string>();
+
+            selectCommand.CommandText = 
+                string.Format(selectString, beginIndex, beginIndex + 19);
+
+            OleDbDataReader reader = selectCommand.ExecuteReader();
+
+            while (reader.Read())
+            {
+                Human man = readUserFromReader(reader, null);
+                answer.Add(man.ToString());
+            }
+            reader.Close();
+
+            return answer;
+        }
+
+        public static bool CreateFriendship(int id1, int id2)
+        {
+            checkFriendCommand.CommandText =
+                string.Format(checkFriendString, id1);
+            checkFriendCommand.Parameters[0].Value = id2;
+
+            object answer = checkFriendCommand.ExecuteScalar();
+
+            if (answer != null) return false;
+
+            createConversationCommand.CommandText =
+                string.Format(createConversationString, id1, id2);
+
+            createConversationCommand.ExecuteNonQuery();
+
+
+            addFriendCommand.CommandText = 
+                string.Format(addFriendString, id1);
+            addFriendCommand.Parameters[0].Value = id2;
+
+            addFriendCommand.ExecuteNonQuery();
+
+
+            addFriendCommand.CommandText =
+                string.Format(addFriendString, id2);
+            addFriendCommand.Parameters[0].Value = id1;
+
+            addFriendCommand.ExecuteNonQuery();
+
+            return true;
         }
 
         static int SearchUserByLogin()

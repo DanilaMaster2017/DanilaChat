@@ -17,6 +17,8 @@ namespace DanilaChat
 {
     public partial class Form1 : Form
     {
+        protected delegate void AddPanel(Panel panel);
+
         static Dictionary<int, ChatScreen> openDialog =
             new Dictionary<int, ChatScreen>();
 
@@ -24,21 +26,26 @@ namespace DanilaChat
         {
             get { return openDialog; }
             set { openDialog = value; }
-        }        
+        }
+
+        public static Human AddFriend { get; set; }
+        public static AddFriendScreen AddScreen { get; set; }
 
         protected static Human I { get; set; }
-        static Dictionary<int, Human> friend = new Dictionary<int, Human>();
+        protected static Dictionary<int, Human> friend = 
+            new Dictionary<int, Human>();
 
         BunifuMetroTextbox loginTextBox;
         BunifuMetroTextbox passwordTextBox;
 
-        Panel header;
+        protected Panel header { get; set; }
 
         protected Panel Body { get; set; }
         protected Label TitleLabel { get; set; }
         protected Font chatFont { get; set; }
+        protected Font boldChatFont { get; set; }
 
-        Font  boldChatFont;
+
         Color blueColor, blueActiveColor, bodyColor, grayColor;
 
         int bodyPadding = 50;
@@ -106,10 +113,11 @@ namespace DanilaChat
 
             header.Controls.Add(closeButton);
 
-            if (!(this is ChatScreen)) ShowLoginChat();           
+            if (!((this is ChatScreen) || (this is AddFriendScreen)))
+                ShowLoginChat();           
         }
 
-        int GetLeftPosition(int controlWidth, int parentWidth)
+        protected int GetLeftPosition(int controlWidth, int parentWidth)
         {
             return parentWidth / 2 - controlWidth / 2;
         }
@@ -142,6 +150,24 @@ namespace DanilaChat
             Height = (int)((double)y / 1.8);
 
             Padding = new Padding(0);
+        }
+
+       protected void DropDownComplete
+            (ComboBox dropdown, string defaultValue, int minValue, int maxValue)
+        {
+            dropdown.Items.Add(defaultValue);
+            dropdown.SelectedIndex = 0;
+
+            for (int i = minValue; i <= maxValue; i++)
+            {
+                if (maxValue == 11)
+                {
+                    MonthName monthName = (MonthName)i;
+                    dropdown.Items.Add(monthName);
+                }
+                else
+                    dropdown.Items.Add(i);
+            }
         }
 
         #region Login
@@ -250,12 +276,10 @@ namespace DanilaChat
             string password = passwordTextBox.Text;
 
             ClientSocketHandler.SendToServer("Login " + login + " " + password);
-            List<string> answerFromServer = new List<string>();
-            answerFromServer.AddRange(
-                ClientSocketHandler.WaitReciveFromServer().Split());
+            string[] answerFromServer;
+            answerFromServer =
+                ClientSocketHandler.WaitReciveFromServer().Split();
 
-            //MessageBox.Show(answerFromServer[0]);
-            //MessageBox.Show(answerFromServer[1]);
 
             if (answerFromServer[0] == "Ok")
             {
@@ -353,6 +377,7 @@ namespace DanilaChat
             plusPicture.Image = Properties.Resources.addFriend;
             plusPicture.SizeMode = PictureBoxSizeMode.StretchImage;
             plusPicture.BringToFront();
+            plusPicture.Click += PlusPicture_Click;
 
             bottomPanel.Controls.Add(plusPicture);
 
@@ -381,6 +406,12 @@ namespace DanilaChat
 
             shadowLabel.Location = new Point(textBoxLocation.X + 1,
                 textBoxLocation.Y);
+        }
+
+        private static void PlusPicture_Click(object sender, EventArgs e)
+        {
+            AddScreen = new AddFriendScreen();
+            AddScreen.ShowDialog();
         }
 
         private void CirclePicture_Click(object sender, EventArgs e)
@@ -423,111 +454,103 @@ namespace DanilaChat
             else shadowLabel.Hide();
         }
 
-        void ShowListOfConversation(int countConversation, List<string> answer)
-        {                 
-            answer.RemoveAt(0);
-            answer.RemoveAt(0);
+        void ShowListOfConversation(int countConversation, string[] answer)
+        {          
+            int beginIndex = 2;
+            BottomPanelShow();
 
-            I = new Human();
-            I.UserId = int.Parse(answer[0]);
-            I.Name = answer[1];
-            I.Surname = answer[2];
-            I.Brithday = DateTime.Parse(answer[3] + " " + answer[4]);
-            I.Gender = answer[5];
-           // if (answer.Length > 5) I.Avatar = answer[5];
-
-            double ratio = 13 / 8.0; 
-
+            I = Human.Parse(answer, beginIndex);
+            // if (answer.Length > 5) I.Avatar = answer[5];
+            beginIndex = 8;
             for (int i = 0; i < countConversation; i++)
             {
-                int beginIndex = 6 + (i * 7);
-                //answerFromServer = ClientSocket.WaitReciveFromServer();
-                //answer = answerFromServer.Split();
-                Human currentFriend = new Human();
+                Human currentFriend = new Human();               
 
-                currentFriend.UserId = int.Parse(answer[beginIndex]);
-                currentFriend.Name = answer[beginIndex + 1];
-                currentFriend.Surname = answer[beginIndex + 2];
-                currentFriend.Brithday = DateTime.Parse(answer[beginIndex + 3] 
-                    + " " + answer[beginIndex + 4]);
-                currentFriend.Gender = answer[beginIndex + 5];
-                //if (answer.Length > 5) currentFriend.Avatar = answer[5];
+                currentFriend = Human.Parse(answer, beginIndex);
                 int numberOfUnread = int.Parse(answer[beginIndex + 6]);
 
-                friend[currentFriend.UserId] = currentFriend;
-
-                //body.BackColor = Color.White;
-
-                int topPanel;
-                if (Body.Controls.Count == 0) topPanel = header.Bottom;
-                else topPanel = Body.Controls[Body.Controls.Count - 1].Bottom;
-
-                Panel conversationPanel = new Panel();
-                conversationPanel.Tag = currentFriend.UserId;
-                conversationPanel.Size = 
-                    new Size(Body.Width, (int)(header.Height * ratio));
-                conversationPanel.Location =
-                    new Point(0, topPanel);
-                conversationPanel.BackColor = Color.White;                
-
-                Body.Controls.Add(conversationPanel);
-
-
-                AvatarBox avatarImage = new AvatarBox();
-                avatarImage.Image = Properties.Resources.AvatarDefault;
-                avatarImage.SizeMode = PictureBoxSizeMode.StretchImage;
-
-                int length = (int)(conversationPanel.Height / ratio);
-                avatarImage.Size = new Size(length, length);
-
-                int padding = (int)(conversationPanel.Height - avatarImage.Height) / 2;
-                avatarImage.Location = new Point(padding, padding);
-                avatarImage.Enabled = false;
-
-                conversationPanel.Controls.Add(avatarImage);
-
-                Label completeName = new Label();
-                completeName.Text = currentFriend.Name + " " + currentFriend.Surname;
-                completeName.Font = boldChatFont;
-                completeName.TextAlign = ContentAlignment.BottomCenter;
-                completeName.AutoSize = true;
-                completeName.ForeColor = Color.FromArgb(66, 100, 139);
-
-                int top = 
-                    GetLeftPosition(completeName.Height, conversationPanel.Height);
-                top = (int)(top * 1.2);
-                int left = avatarImage.Right + padding;
-                completeName.Location = new Point(left, top);
-
-                conversationPanel.Controls.Add(completeName);                           
-
-                PictureBox chatImage = new PictureBox();
-                chatImage.Image = Properties.Resources.chatImage;
-                chatImage.SizeMode = PictureBoxSizeMode.StretchImage;
-                chatImage.Visible = false;
-                chatImage.Enabled = false;
-
-                int sizeChatImage = (int)(3 * length / 4.0);
-                chatImage.Size = new Size(sizeChatImage, sizeChatImage);
-
-                int topChatImage =
-                    GetLeftPosition(chatImage.Height, conversationPanel.Height);
-                int paddingRight = sizeChatImage / 2;
-                int paddingLeft = conversationPanel.Width 
-                    - paddingRight - chatImage.Width;
-
-                chatImage.Location = new Point(paddingLeft,topChatImage);
-
-                conversationPanel.Controls.Add(chatImage);
-
-                conversationPanel.MouseEnter += ConversationPanel_MouseEnter;
-                conversationPanel.MouseLeave += ConversationPanel_MouseLeave;
-
-                conversationPanel.Click += ConversationPanel_Click;
-                completeName.Click += ConversationPanel_Click;
+                ShowConversationPanel(currentFriend);
+                beginIndex += 7;
             }
-            BottomPanelShow();
+            
             ClientSocketHandler.BeginRecive();
+        }
+
+        public void ShowConversationPanel(Human currentFriend)
+        {
+            double ratio = 13 / 8.0;           
+
+            friend[currentFriend.UserId] = currentFriend;
+
+            int topPanel;
+            if (Body.Controls.Count == 1) topPanel = header.Bottom;
+            else topPanel = Body.Controls[Body.Controls.Count - 1].Bottom;
+
+            Panel conversationPanel = new Panel();
+            conversationPanel.Tag = currentFriend.UserId;
+            conversationPanel.Size =
+                new Size(Body.Width, (int)(header.Height * ratio));
+            conversationPanel.Location =
+                new Point(0, topPanel);
+            conversationPanel.BackColor = Color.White;
+    
+        
+           AvatarBox avatarImage = new AvatarBox();
+           avatarImage.Image = Properties.Resources.AvatarDefault;
+            avatarImage.SizeMode = PictureBoxSizeMode.StretchImage;
+
+            int length = (int)(conversationPanel.Height / ratio);
+            avatarImage.Size = new Size(length, length);
+
+            int padding = (int)(conversationPanel.Height - avatarImage.Height) / 2;
+            avatarImage.Location = new Point(padding, padding);
+            avatarImage.Enabled = false;
+
+            conversationPanel.Controls.Add(avatarImage);
+
+            Label completeName = new Label();
+            completeName.Text = currentFriend.Name + " " + currentFriend.Surname;
+            completeName.Font = boldChatFont;
+            completeName.TextAlign = ContentAlignment.BottomCenter;
+            completeName.AutoSize = true;
+            completeName.ForeColor = Color.FromArgb(66, 100, 139);
+
+            int top =
+                GetLeftPosition(completeName.Height, conversationPanel.Height);
+            top = (int)(top * 1.2);
+            int left = avatarImage.Right + padding;
+            completeName.Location = new Point(left, top);
+
+            conversationPanel.Controls.Add(completeName);
+
+            PictureBox chatImage = new PictureBox();
+            chatImage.Image = Properties.Resources.chatImage;
+            chatImage.SizeMode = PictureBoxSizeMode.StretchImage;
+            chatImage.Visible = false;
+            chatImage.Enabled = false;
+
+            int sizeChatImage = (int)(3 * length / 4.0);
+            chatImage.Size = new Size(sizeChatImage, sizeChatImage);
+
+            int topChatImage =
+                GetLeftPosition(chatImage.Height, conversationPanel.Height);
+            int paddingRight = sizeChatImage / 2;
+            int paddingLeft = conversationPanel.Width
+                - paddingRight - chatImage.Width;
+
+            chatImage.Location = new Point(paddingLeft, topChatImage);
+
+            conversationPanel.Controls.Add(chatImage);
+
+            conversationPanel.MouseEnter += ConversationPanel_MouseEnter;
+            conversationPanel.MouseLeave += ConversationPanel_MouseLeave;
+
+            conversationPanel.Click += ConversationPanel_Click;
+            completeName.Click += ConversationPanel_Click;
+
+
+            AddPanel addConversation = Body.Controls.Add;
+            Invoke(addConversation, conversationPanel);
         }
 
         private void ConversationPanel_Click(object sender, EventArgs e)
@@ -783,26 +806,7 @@ namespace DanilaChat
             continueButton.Size = new Size(268, 45);
 
             continueButton.Click += ContinueButton_Click;
-        }
-
-       
-
-        void DropDownComplete(ComboBox dropdown, string defaultValue, int minValue, int maxValue)
-        {
-            dropdown.Items.Add(defaultValue);
-            dropdown.SelectedIndex = 0;
-
-            for (int i = minValue; i <= maxValue; i++)
-            {
-                if (maxValue == 11)
-                {
-                    MonthName monthName = (MonthName)i;
-                    dropdown.Items.Add(monthName);
-                }
-                else
-                    dropdown.Items.Add(i);
-            }
-        }
+        }       
 
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
