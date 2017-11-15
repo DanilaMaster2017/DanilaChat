@@ -18,3 +18,6 @@ L:\проекты чата\DanilaChat\DanilaChat\obj\Debug\DanilaChat.Properties
 L:\проекты чата\DanilaChat\DanilaChat\obj\Debug\DanilaChat.csproj.GenerateResource.Cache
 L:\проекты чата\DanilaChat\DanilaChat\obj\Debug\DanilaChat.exe
 L:\проекты чата\DanilaChat\DanilaChat\obj\Debug\DanilaChat.pdb
+E:\проекты чата\DanilaChat\DanilaChat\bin\Debug\MetroFramework.Design.dll
+E:\проекты чата\DanilaChat\DanilaChat\bin\Debug\MetroFramework.dll
+E:\проекты чата\DanilaChat\DanilaChat\bin\Debug\MetroFramework.Fonts.dll

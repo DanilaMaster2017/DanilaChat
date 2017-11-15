@@ -12,10 +12,14 @@ namespace DanilaChat
     public class AddFriendScreen : Form1
     {
         Panel leftPanel;
+        ScrollPanel scrollPanel;
         Label shadowLabel;
         TextBox textBox;
         PictureBox resetPicture;
         Color lineColor = Color.FromArgb(237, 237, 237);
+
+        int selectIndex = 1;
+        bool selectEnd = false; 
 
         double millimetr;
 
@@ -134,6 +138,13 @@ namespace DanilaChat
             secondLine.Location = new Point(0, secondPanel.Height - secondLine.Height);
             secondLine.Width = leftPanel.Width;
             secondPanel.Controls.Add(secondLine);
+
+            scrollPanel = new ScrollPanel();
+            scrollPanel.Size = new Size(leftPanel.Width - scrollPanel.scrollPadding, 
+                leftPanel.Height - secondPanel.Bottom);
+            scrollPanel.Location = new Point(0, secondPanel.Bottom + 1);
+
+            leftPanel.Controls.Add(scrollPanel);
 
             Panel rightPanel = new Panel();
             rightPanel.BackColor = Color.White;
@@ -291,9 +302,19 @@ namespace DanilaChat
                 }
 
                 Panel usersPanel = new Panel();
-                usersPanel.Size = new Size(leftPanel.Width, (int)(25.65 * millimetr));
-                Control lastPanel = leftPanel.Controls[leftPanel.Controls.Count - 1];
-                usersPanel.Location = new Point(0, lastPanel.Bottom + 1);             
+                usersPanel.Size = new Size(scrollPanel.Width, (int)(25.65 * millimetr));
+
+                int lastPanelBottom;
+                if (scrollPanel.Controls.Count == 0)
+                {
+                    lastPanelBottom = 0;
+                }
+                else
+                {
+                    lastPanelBottom =
+                    scrollPanel.Controls[scrollPanel.Controls.Count - 1].Bottom;
+                }
+                usersPanel.Location = new Point(0, lastPanelBottom + 1);             
 
 
                 AvatarBox avatar = new AvatarBox();
@@ -354,8 +375,8 @@ namespace DanilaChat
 
                 usersPanel.Controls.Add(separatorLine);
 
-                AddPanel AddFriendMethod = leftPanel.Controls.Add;
-                leftPanel.Invoke(AddFriendMethod, usersPanel);
+                AddPanel AddFriendMethod = scrollPanel.Controls.Add;
+                scrollPanel.Invoke(AddFriendMethod, usersPanel);
             }
         }
 

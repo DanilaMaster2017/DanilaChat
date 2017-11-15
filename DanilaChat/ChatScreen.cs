@@ -12,6 +12,7 @@ namespace DanilaChat
     public class ChatScreen : Form1
     {
         Human friend;
+        ChatScroll scrollPanel;
 
         Label shadowLabel;
         int avatarSize;
@@ -90,6 +91,13 @@ namespace DanilaChat
             
             Body.Controls.Add(eventPanel);
 
+            scrollPanel = new ChatScroll();
+            scrollPanel.Size = new Size(Width - scrollPanel.scrollPadding,
+                Height - header.Height - bottomPanel.Height - eventHeight);
+            scrollPanel.Location = new Point(0, header.Bottom + 1);
+
+            Body.Controls.Add(scrollPanel);
+
             List<string> listMessage = PrepareString(messages);
             bool iSender;
 
@@ -144,10 +152,15 @@ namespace DanilaChat
 
         void ShiftTopControl(int shift)
         {
-            for (int i = Body.Controls.Count - 2; i > 1; i--)
+            scrollPanel.Top -= shift;
+            scrollPanel.Height += shift;
+
+            /*
+            for (int i = scrollPanel.Controls.Count - 2; i > -1; i--)
             {
-                Body.Controls[i].Top -= shift;
+                scrollPanel.Controls[i].Top -= shift;
             }
+            */
         }
 
         public void ShowMessage(string text, bool iSender)
@@ -173,7 +186,7 @@ namespace DanilaChat
 
             containerPanel.Controls.Add(avatar);
             containerPanel.Controls.Add(messagePanel);
-            Body.Controls.Add(containerPanel);
+            scrollPanel.Controls.Add(containerPanel);
 
             Size messageSize = messageLabel.Size;
             messagePanel.Size = new Size
@@ -187,12 +200,14 @@ namespace DanilaChat
 
 
             containerPanel.Size = new Size
-                (Body.Width, messagePanel.Height + 2 * paddingContainer);
+                (scrollPanel.Width, messagePanel.Height + 2 * paddingContainer);
             // containerPanel.Padding = new Padding(paddingContainer);
 
-            Control eventPanel = Body.Controls[1];
+            scrollPanel.Top -= containerPanel.Height;
+            scrollPanel.Height += containerPanel.Height;
+
             containerPanel.Location = new Point
-                (0, eventPanel.Top - containerPanel.Height);
+                (0, scrollPanel.Height - containerPanel.Height);
 
 
             int avatarPadding = (int)(avatarSize / 5.0);
@@ -225,7 +240,8 @@ namespace DanilaChat
 
             }
 
-            ShiftTopControl(containerPanel.Height);
+           // ShiftTopControl(containerPanel.Height);
+
         }
 
         string LinesFromMessage(string message)

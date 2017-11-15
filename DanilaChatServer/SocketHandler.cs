@@ -169,7 +169,8 @@ namespace DanilaChatServer
             }
 
             data.Buffer = new byte[1024];
-            data.ClientConnection.BeginReceive(data.Buffer, 0, 1024, SocketFlags.None, ReciveFromClient, data);
+            data.ClientConnection.BeginReceive
+                (data.Buffer, 0, 1024, SocketFlags.None, ReciveFromClient, data);
         }
 
         static void SendingOnlineMessage

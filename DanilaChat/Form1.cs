@@ -45,6 +45,9 @@ namespace DanilaChat
         protected Font chatFont { get; set; }
         protected Font boldChatFont { get; set; }
 
+        ScrollPanel scrollPanel;
+        Panel bottomPanel;
+
 
         Color blueColor, blueActiveColor, bodyColor, grayColor;
 
@@ -345,7 +348,7 @@ namespace DanilaChat
 
             TitleLabel.Text = "10 друзей онлайн";
 
-            Panel bottomPanel = new Panel();
+            bottomPanel = new Panel();
             bottomPanel.BackColor = Color.White;
             bottomPanel.Dock = DockStyle.Bottom;
             bottomPanel.Height = (int)(Body.Height / ratio);
@@ -461,11 +464,19 @@ namespace DanilaChat
 
             I = Human.Parse(answer, beginIndex);
             // if (answer.Length > 5) I.Avatar = answer[5];
+
+            scrollPanel = new ScrollPanel();
+            scrollPanel.Size = new Size(Width - scrollPanel.scrollPadding,
+                Height - header.Height - bottomPanel.Height);
+            scrollPanel.Location = new Point(0, header.Bottom + 1);
+
+            Body.Controls.Add(scrollPanel);
+
             beginIndex = 8;
             for (int i = 0; i < countConversation; i++)
             {
                 Human currentFriend = new Human();               
-
+           
                 currentFriend = Human.Parse(answer, beginIndex);
                 int numberOfUnread = int.Parse(answer[beginIndex + 6]);
 
@@ -478,18 +489,19 @@ namespace DanilaChat
 
         public void ShowConversationPanel(Human currentFriend)
         {
+            
             double ratio = 13 / 8.0;           
 
             friend[currentFriend.UserId] = currentFriend;
 
             int topPanel;
-            if (Body.Controls.Count == 1) topPanel = header.Bottom;
-            else topPanel = Body.Controls[Body.Controls.Count - 1].Bottom;
+            if (scrollPanel.Controls.Count == 0) topPanel = 0;
+            else topPanel = scrollPanel.Controls[scrollPanel.Controls.Count - 1].Bottom;
 
             Panel conversationPanel = new Panel();
             conversationPanel.Tag = currentFriend.UserId;
             conversationPanel.Size =
-                new Size(Body.Width, (int)(header.Height * ratio));
+                new Size(scrollPanel.Width, (int)(header.Height * ratio));
             conversationPanel.Location =
                 new Point(0, topPanel);
             conversationPanel.BackColor = Color.White;
@@ -549,7 +561,7 @@ namespace DanilaChat
             completeName.Click += ConversationPanel_Click;
 
 
-            AddPanel addConversation = Body.Controls.Add;
+            AddPanel addConversation = scrollPanel.Controls.Add;
             Invoke(addConversation, conversationPanel);
         }
 

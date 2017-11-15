@@ -34,8 +34,6 @@ namespace DanilaChatServer
                 SocketHandler.ServerSocket.BeginAccept(SocketHandler.HandlerAccept, null);
 
                 DataBaseConnector dbConnection = new DataBaseConnector();
-            
-               // List<string> an = DataBaseConnector.LoginChat("DanilaMaster", "DanilaIsCool", null);
 
                 Console.ReadLine();
             }
