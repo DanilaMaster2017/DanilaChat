@@ -21,3 +21,6 @@ L:\проекты чата\DanilaChat\DanilaChat\obj\Debug\DanilaChat.pdb
 E:\проекты чата\DanilaChat\DanilaChat\bin\Debug\MetroFramework.Design.dll
 E:\проекты чата\DanilaChat\DanilaChat\bin\Debug\MetroFramework.dll
 E:\проекты чата\DanilaChat\DanilaChat\bin\Debug\MetroFramework.Fonts.dll
+L:\проекты чата\DanilaChat\DanilaChat\bin\Debug\MetroFramework.Design.dll
+L:\проекты чата\DanilaChat\DanilaChat\bin\Debug\MetroFramework.dll
+L:\проекты чата\DanilaChat\DanilaChat\bin\Debug\MetroFramework.Fonts.dll

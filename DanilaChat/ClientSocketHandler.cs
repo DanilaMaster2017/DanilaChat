@@ -14,7 +14,8 @@ namespace DanilaChat
         static Socket client;
         static byte[] buffer;
 
-        delegate void meDelegate(string message, bool iSender);
+        delegate void messageDelegate(string message, bool iSender, bool inUp);
+        delegate void messagesDelegate(string messages);
 
         static ClientSocketHandler()
         {
@@ -70,9 +71,9 @@ namespace DanilaChat
                         index = parametrs[0].Length + parametrs[1].Length + 2;
                         string message = query.Substring(index);
 
-                        meDelegate del = Form1.OpenDialog[sender].ShowMessage;
+                        messageDelegate del = Form1.OpenDialog[sender].ShowMessage;
 
-                        Form1.OpenDialog[sender].Invoke(del, message, false);
+                        Form1.OpenDialog[sender].Invoke(del, message, false, false);
                     }
                     break;
 
@@ -82,16 +83,23 @@ namespace DanilaChat
                     index = parametrs[0].Length + parametrs[1].Length + 2;
                     string messages = query.Substring(index);
 
-                   // ChatScreen chatScreen = new ChatScreen(messages.Split(), friend);
-                    //chatScreen.ShowDialog();
-                    
-                    Thread thread = new Thread(NewForm);
-                    thread.Start(
-                        new object[] {
-                            messages.Split(),
-                            friend 
-                        });
-                    
+
+                    if (Form1.OpenDialog.ContainsKey(friend.UserId))
+                    {
+                        messagesDelegate del = Form1.OpenDialog[friend.UserId].ShowMessages;
+
+                        Form1.OpenDialog[friend.UserId].Invoke(del, messages);
+                    }
+                    else
+                    {
+
+                        Thread thread = new Thread(NewForm);
+                        thread.Start(
+                            new object[] {
+                            messages,
+                            friend
+                            });
+                    }
                     break;
 
                 case "Select":
@@ -126,10 +134,10 @@ namespace DanilaChat
         {
             object[] parametrs = (object[])parametr;
 
-            string[] message = (string[])parametrs[0];
+            string messages = (string)parametrs[0];
             Human friend = (Human)parametrs[1];
 
-            ChatScreen chat = new ChatScreen(message, friend);
+            ChatScreen chat = new ChatScreen(messages, friend);
             Form1.OpenDialog[friend.UserId] = chat;
             chat.ShowDialog();
             

@@ -18,12 +18,13 @@ namespace DanilaChat
         PictureBox resetPicture;
         Color lineColor = Color.FromArgb(237, 237, 237);
 
-        int selectIndex = 1;
-        bool selectEnd = false; 
-
         double millimetr;
 
         // доработать text box
+
+        int countQuery = 0;
+        bool downloaded = true;
+        bool endCommon = false;
 
         public AddFriendScreen()
         {          
@@ -143,6 +144,7 @@ namespace DanilaChat
             scrollPanel.Size = new Size(leftPanel.Width - scrollPanel.scrollPadding, 
                 leftPanel.Height - secondPanel.Bottom);
             scrollPanel.Location = new Point(0, secondPanel.Bottom + 1);
+            scrollPanel.requestDownload += ScrollPanel_requestDownload;
 
             leftPanel.Controls.Add(scrollPanel);
 
@@ -280,14 +282,28 @@ namespace DanilaChat
             bottomLine.Width = rightPanel.Width - 2 * padding;
             rightPanel.Controls.Add(bottomLine);
 
-            ClientSocketHandler.SendToServer("Select 1");
+            ClientSocketHandler.SendToServer("Select 0");
 
+        }
+
+        private void ScrollPanel_requestDownload(object sender, EventArgs e)
+        {
+            if (downloaded || endCommon) return;
+            downloaded = true;
+
+            countQuery++;
+            ClientSocketHandler.SendToServer("Select " + countQuery);          
         }
 
         public void ShowUsers(string[] people)
         {
+            SuspendLayout();
+            scrollPanel.ContentAdded = true;
+
             int topPadding = (int)(4.85 * millimetr);
             int beginIndex;
+
+            if (people[people.Length - 1] == "e") endCommon = true;
 
             for (int i = 0; i < people.Length / 6; i++)
             {
@@ -378,6 +394,10 @@ namespace DanilaChat
                 AddPanel AddFriendMethod = scrollPanel.Controls.Add;
                 scrollPanel.Invoke(AddFriendMethod, usersPanel);
             }
+            downloaded = false;
+
+            scrollPanel.ContentAdded = false;
+            ResumeLayout();
         }
 
         private void AddButton_Click(object sender, EventArgs e)

@@ -20,7 +20,15 @@ namespace DanilaChatServer
         static string loginString = "SELECT * FROM ListChatUser WHERE UserLogin = ?";
         static string selectUserString = "SELECT * FROM ListChatUser WHERE UserId = ?";
         static string readListString = "SELECT * FROM ListOfConversation_{0}";
-        static string readConversationString = "SELECT * FROM Conversation_{0}_{1}";
+
+        static string readConversationString = 
+            "WITH ResultSet ( [RowNumber], [UserId], "
+            + "[Message], [TimeDispatch]) "
+            + "AS( SELECT ROW_NUMBER() OVER(ORDER BY TimeDispatch DESC), "
+            + "* FROM Conversation_{0}_{1} ) "
+            + "SELECT [UserId], [Message], [TimeDispatch] "
+            + "FROM ResultSet WHERE RowNumber BETWEEN {2} AND {3}";
+
         static string messageString = 
             "INSERT INTO Conversation_{0}_{1} (UserId, Message) Values (?, ?)";
 
@@ -203,12 +211,15 @@ namespace DanilaChatServer
             reader.Close();
         }
 
-        static public List<string> ReadConversation(int id1, int id2)
+        static public List<string> ReadConversation(int id1, int id2, int numberQuery)
         {
             List<string> answer = new List<string>();
+            int requestCount = 25;
+            int beginIndex = 1 + numberQuery * requestCount;
 
             readConversationCommand.CommandText = 
-                String.Format(readConversationString, id1, id2);
+                String.Format(readConversationString, id1, id2, beginIndex,
+                beginIndex + requestCount - 1);
 
             OleDbDataReader readConversation = 
                 readConversationCommand.ExecuteReader();
@@ -228,6 +239,7 @@ namespace DanilaChatServer
 
                 answer.Add(result);
             }
+            if (answer.Count < requestCount) answer.Add("e");
 
             readConversation.Close();
             return answer;
@@ -292,12 +304,15 @@ namespace DanilaChatServer
             return answer;
         }
 
-        public static List<string> SelectUsers(int beginIndex)
+        public static List<string> SelectUsers(int numberQuery)
         {
             List<string> answer = new List<string>();
+            int requestCount = 20;
+            int beginIndex = 1 + requestCount * numberQuery;
 
             selectCommand.CommandText = 
-                string.Format(selectString, beginIndex, beginIndex + 19);
+                string.Format(selectString, beginIndex, 
+                beginIndex + requestCount - 1);
 
             OleDbDataReader reader = selectCommand.ExecuteReader();
 
@@ -307,6 +322,8 @@ namespace DanilaChatServer
                 answer.Add(man.ToString());
             }
             reader.Close();
+
+            if (answer.Count < requestCount) answer.Add("e");
 
             return answer;
         }
@@ -342,17 +359,6 @@ namespace DanilaChatServer
 
             return true;
         }
-
-        static int SearchUserByLogin()
-        {
-            return 1;
-        }
-
-        static bool checkPassword(string writeUser, string validPassword)
-        {
-            return writeUser == validPassword;
-        }
-
 
     }
 }

@@ -77,14 +77,11 @@ namespace DanilaChatServer
                 case "Read":
                     int id1 = int.Parse(parametrs[1]);
                     int id2 = int.Parse(parametrs[2]);
+                    int numberQuery = int.Parse(parametrs[3]);
 
-                    answerDB = DataBaseConnector.ReadConversation(id1, id2);
+                    answerDB = DataBaseConnector.ReadConversation(id1, id2, numberQuery);
 
-                    int friendId = (id1 == data.User.UserId) ? id2 : id1;
-                    if (answerDB.Count == 0)
-                    {
-                        answerDB.Add("Conversation " + friendId);
-                    }
+                    int friendId = (id1 == data.User.UserId) ? id2 : id1;                   
                     answerDB[0] = "Conversation " + friendId + " " + answerDB[0];
                     break;
 
@@ -151,14 +148,6 @@ namespace DanilaChatServer
                 default :
                     break;
             }
-
-            /*
-            if (query.Contains("q"))
-            {
-                data.ClientConnection.Dispose();
-                data = null;
-                return;
-            }*/
 
             if (answerDB != null)
             {

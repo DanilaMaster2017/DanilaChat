@@ -483,6 +483,7 @@ namespace DanilaChat
                 ShowConversationPanel(currentFriend);
                 beginIndex += 7;
             }
+            scrollPanel.ContentAdded = false;
             
             ClientSocketHandler.BeginRecive();
         }
@@ -593,7 +594,7 @@ namespace DanilaChat
                 id2 = temp;
             }
              
-            ClientSocketHandler.SendToServer("Read " + id1 + " " + id2);         
+            ClientSocketHandler.SendToServer("Read " + id1 + " " + id2 + " 0");         
         }
 
         SolidBrush brush = new SolidBrush(Color.White);

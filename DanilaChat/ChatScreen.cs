@@ -17,7 +17,11 @@ namespace DanilaChat
         Label shadowLabel;
         int avatarSize;
 
-        public ChatScreen(string[] messages, Human friend)
+        int countQuery = 0;
+        bool downloaded = true;
+        bool endCommon = false;
+
+        public ChatScreen(string messages, Human friend)
         {
             this.friend = friend;
 
@@ -95,19 +99,48 @@ namespace DanilaChat
             scrollPanel.Size = new Size(Width - scrollPanel.scrollPadding,
                 Height - header.Height - bottomPanel.Height - eventHeight);
             scrollPanel.Location = new Point(0, header.Bottom + 1);
+            scrollPanel.requestDownload += ScrollPanel_requestDownload;
 
             Body.Controls.Add(scrollPanel);
+
+            scrollPanel.TopUpControl = scrollPanel.Height;
+            scrollPanel.BottomDownControl = scrollPanel.Height;
+
+            ShowMessages(messages);
+        }
+
+        private void ScrollPanel_requestDownload(object sender, EventArgs e)
+        {
+            if (downloaded || endCommon) return;
+
+            downloaded = true;
+            countQuery++;
+
+            int id1 = (I.UserId < friend.UserId) ? I.UserId : friend.UserId;
+            int id2 = (I.UserId < friend.UserId) ? friend.UserId : I.UserId ;
+
+            ClientSocketHandler.SendToServer("Read " + id1 + " " + id2 + " " + countQuery);
+        }
+
+        public void ShowMessages(string messageString)
+        {
+            string[] messages = messageString.Split();
+
+            scrollPanel.ContentAdded = true;
+            if (messages[messages.Length - 1] == "e") endCommon = true;
 
             List<string> listMessage = PrepareString(messages);
             bool iSender;
 
-            for(int i = 0;  i < listMessage.Count / 3; i++)
+            for (int i = 0; i < listMessage.Count / 3; i++)
             {
                 iSender = (int.Parse(listMessage[3 * i]) == I.UserId) ?
                     true : false;
 
-                ShowMessage(listMessage[1 + 3 * i], iSender);
+                ShowMessage(listMessage[1 + 3 * i], iSender, true);
             }
+            downloaded = false;
+            scrollPanel.ContentAdded = false;
         }
 
  
@@ -143,7 +176,7 @@ namespace DanilaChat
                 string messageText = textBox.Text;
                 textBox.Text = "";
 
-                ShowMessage(messageText, true);
+                ShowMessage(messageText, true, false);
 
                 ClientSocketHandler.SendToServer("Message " + friend.UserId + " " + messageText);
             }
@@ -154,17 +187,12 @@ namespace DanilaChat
         {
             scrollPanel.Top -= shift;
             scrollPanel.Height += shift;
-
-            /*
-            for (int i = scrollPanel.Controls.Count - 2; i > -1; i--)
-            {
-                scrollPanel.Controls[i].Top -= shift;
-            }
-            */
         }
 
-        public void ShowMessage(string text, bool iSender)
+         public void ShowMessage(string text, bool iSender, bool inUp)
         {
+            if (!inUp) scrollPanel.ContentAdded = true; 
+
             text = LinesFromMessage(text);
 
             Label messageLabel = new Label(); 
@@ -203,12 +231,20 @@ namespace DanilaChat
                 (scrollPanel.Width, messagePanel.Height + 2 * paddingContainer);
             // containerPanel.Padding = new Padding(paddingContainer);
 
-            scrollPanel.Top -= containerPanel.Height;
-            scrollPanel.Height += containerPanel.Height;
+            if (inUp)
+            {
+                containerPanel.Location = new Point
+                    (0, scrollPanel.TopUpControl - containerPanel.Height);
 
-            containerPanel.Location = new Point
-                (0, scrollPanel.Height - containerPanel.Height);
+                scrollPanel.TopUpControl = containerPanel.Top;
+            }
+            else
+            {
+                containerPanel.Location = new Point
+                    (0, scrollPanel.BottomDownControl);
 
+                scrollPanel.BottomDownControl = containerPanel.Bottom;
+            }            
 
             int avatarPadding = (int)(avatarSize / 5.0);
 
@@ -239,9 +275,8 @@ namespace DanilaChat
                     avatar.Image = Properties.Resources.AvatarDefault;
 
             }
-
-           // ShiftTopControl(containerPanel.Height);
-
+            // ShiftTopControl(containerPanel.Height);
+            if (!inUp) scrollPanel.ContentAdded = false;
         }
 
         string LinesFromMessage(string message)

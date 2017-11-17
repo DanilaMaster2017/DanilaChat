@@ -5,6 +5,7 @@ using System.Text;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using DanilaChat;
 
 namespace DanilaChatServer
 {
@@ -31,12 +32,37 @@ namespace DanilaChatServer
 
                 Console.WriteLine("Server run");
 
+                DataBaseConnector dbConnection = new DataBaseConnector();
+                //GeneratedNewUsers(40);
+
                 SocketHandler.ServerSocket.BeginAccept(SocketHandler.HandlerAccept, null);
 
-                DataBaseConnector dbConnection = new DataBaseConnector();
+                
 
                 Console.ReadLine();
             }
+/*
+        static void GeneratedNewUsers(int count)
+        {
+            for (int i = 0; i < 40;i++)
+            {
+                Human newUsers = new Human();
+
+                newUsers.Name = "Петрович" + i;
+                newUsers.Surname = "Петров";
+                newUsers.Brithday = DateTime.Now;
+                newUsers.Gender = "male";
+
+                string login = "user" + i;
+                string password = "user" + i;
+
+                string regestrationString = "n " + login + " " + password + " " + newUsers.ToString();  
+
+                DataBaseConnector.RegestrationUser(regestrationString.Split());
+            }
+            Console.WriteLine("Completed");
+        }
+        */
             
         }
     }

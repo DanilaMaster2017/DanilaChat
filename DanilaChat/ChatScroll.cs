@@ -9,26 +9,38 @@ namespace DanilaChat
 {
     public class ChatScroll : ScrollPanel
     {
+        public int TopUpControl { get; set; }
+        public int BottomDownControl { get; set; }
+
+        bool firstDownload = true;
         public ChatScroll()
         {
             scrollBar.ScrollbarSize = 
                 (int)(scrollBar.ScrollbarSize * 1.5); 
         }
 
-        protected override void ScrollPanel_ControlAdded(object sender, ControlEventArgs e)
+        protected override void checkRequestScroll()
         {
-            if (scrollBar.Height == Height)
+            if (BottomDownControl - TopUpControl > scrollBar.Height)
             {
-                scrollBar.Hide();
-            }
-            else
-            {
-                scrollBar.Show();
-                scrollBar.Maximum = Height -  2 * scrollBar.Height 
-                    + Parent.Controls[0].Height;
+                scrollBar.Maximum = int.MaxValue / 2;
+                scrollBar.Minimum = scrollBar.Maximum -
+                      (BottomDownControl - TopUpControl - scrollBar.Height);
 
-                scrollBar.Value = scrollBar.Maximum;
+                if (firstDownload)
+                {
+                    scrollBar.Value = scrollBar.Maximum;
+                    firstDownload = false;
+                }
+
+                scrollBar.Show();
             }
         }
+
+        protected override bool CheckRequestDownload()
+        {
+            return scrollBar.Minimum - scrollBar.Value < 2 * Height;
+        }
+
     }
 }
