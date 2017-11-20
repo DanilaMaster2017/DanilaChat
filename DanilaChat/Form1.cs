@@ -32,7 +32,7 @@ namespace DanilaChat
         public static AddFriendScreen AddScreen { get; set; }
 
         protected static Human I { get; set; }
-        protected static Dictionary<int, Human> friend = 
+        protected static Dictionary<int, Human> friend =
             new Dictionary<int, Human>();
 
         BunifuMetroTextbox loginTextBox;
@@ -48,6 +48,7 @@ namespace DanilaChat
         ScrollPanel scrollPanel;
         Panel bottomPanel;
 
+        string str = "";
 
         Color blueColor, blueActiveColor, bodyColor, grayColor;
 
@@ -67,7 +68,8 @@ namespace DanilaChat
         {
             InitializeComponent();
 
-            CreateGraphics().CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+            CreateGraphics().CompositingQuality = 
+                CompositingQuality.HighQuality;
 
             blueColor = Color.FromArgb(80, 114, 153);
             blueActiveColor = Color.FromArgb(104, 136, 173);
@@ -90,7 +92,7 @@ namespace DanilaChat
             Body = new Panel();
             Body.Dock = DockStyle.Fill;
             Body.BackColor = bodyColor;
-            Controls.Add(Body); 
+            Controls.Add(Body);
 
             TitleLabel = new Label();
             TitleLabel.Anchor = AnchorStyles.Left;
@@ -107,8 +109,8 @@ namespace DanilaChat
             BunifuImageButton closeButton = new BunifuImageButton();
             closeButton.Anchor = AnchorStyles.Right;
             closeButton.BackColor = Color.Transparent;
-            closeButton.Size = new Size(header.Height-16, header.Height-16);
-            closeButton.Location = new Point(header.Width - closeButton.Width-10,7);
+            closeButton.Size = new Size(header.Height - 16, header.Height - 16);
+            closeButton.Location = new Point(header.Width - closeButton.Width - 10, 7);
             closeButton.Image = Properties.Resources.vk_close;
             closeButton.ImageActive = Properties.Resources.vk_close_active;
             closeButton.Zoom = 0;
@@ -117,7 +119,7 @@ namespace DanilaChat
             header.Controls.Add(closeButton);
 
             if (!((this is ChatScreen) || (this is AddFriendScreen)))
-                ShowLoginChat();           
+                ShowLoginChat();
         }
 
         protected int GetLeftPosition(int controlWidth, int parentWidth)
@@ -150,20 +152,32 @@ namespace DanilaChat
             int x = Screen.PrimaryScreen.WorkingArea.Width;
 
             Width = x / 5;
-            Height = (int)((double)y / 1.8);
+            Height = (int)(y / 1.8);
 
             Padding = new Padding(0);
         }
 
-       protected void DropDownComplete
-            (ComboBox dropdown, string defaultValue, int minValue, int maxValue)
+        protected void DropDownComplete
+             (ComboBox dropdown, string defaultValue, int minValue, int maxValue)
         {
-            dropdown.Items.Add(defaultValue);
-            dropdown.SelectedIndex = 0;
+            object selectItem = null;
 
+            if (dropdown.Items.Count != 0)
+            {
+                selectItem = dropdown.SelectedItem;
+
+                while (dropdown.Items.Count > 0)
+                {
+                    dropdown.Items.RemoveAt(0);
+                }
+            }
+
+            dropdown.Items.Add(defaultValue);
+
+            
             for (int i = minValue; i <= maxValue; i++)
             {
-                if (maxValue == 11)
+                if ((string)dropdown.Tag == "month")
                 {
                     MonthName monthName = (MonthName)i;
                     dropdown.Items.Add(monthName);
@@ -171,15 +185,24 @@ namespace DanilaChat
                 else
                     dropdown.Items.Add(i);
             }
+
+            if (selectItem != null)
+            {
+                dropdown.SelectedItem = selectItem;
+            }
+            else
+            {
+                dropdown.SelectedIndex = 0;
+            }
         }
 
         #region Login
         void ShowLoginChat()
         {
             Size buttonSize = new Size(240, 68);
-            
+
             Label loginLabel = new Label();
-            loginLabel.Text = "Телефон или e-mail";
+            loginLabel.Text = "Логин";
             loginLabel.AutoSize = true;
             loginLabel.Font = boldChatFont;
             loginLabel.ForeColor = grayColor;
@@ -189,6 +212,7 @@ namespace DanilaChat
             loginTextBox = new BunifuMetroTextbox();
             loginTextBox.Font = chatFont;
             loginTextBox.Padding = textBoxPadding;
+            loginTextBox.BackColor = Color.White;
             loginTextBox.BorderThickness = textBoxBorder;
             loginTextBox.BorderColorFocused = blueColor;
             loginTextBox.BorderColorMouseHover = blueColor;
@@ -208,6 +232,7 @@ namespace DanilaChat
             passwordTextBox = new BunifuMetroTextbox();
             passwordTextBox.Font = chatFont;
             passwordTextBox.Padding = textBoxPadding;
+            passwordTextBox.BackColor = Color.White;
             passwordTextBox.BorderThickness = textBoxBorder;
             passwordTextBox.BorderColorFocused = blueColor;
             passwordTextBox.BorderColorMouseHover = blueColor;
@@ -290,7 +315,7 @@ namespace DanilaChat
                 ClearBody();
 
 
-                ShowListOfConversation(int.Parse(answerFromServer[1]), 
+                ShowListOfConversation(int.Parse(answerFromServer[1]),
                   answerFromServer);
                 return;
             }
@@ -298,7 +323,7 @@ namespace DanilaChat
             if (visibleErrorLogin) return;
 
             visibleErrorLogin = true;
-            ShowErrorLogin();            
+            ShowErrorLogin();
         }
 
         void ShowErrorLogin()
@@ -369,7 +394,7 @@ namespace DanilaChat
             textBox.Font = chatFont;
             textBox.TextChanged += TextBox_TextChanged;
             textBox.BorderStyle = BorderStyle.None;
-
+            textBox.TextChanged += TextBox_TextChanged1;
 
             int imageSize = (int)(bottomPanel.Height / 2.0);
             int imagePadding = (int)(imageSize / 2.0);
@@ -411,6 +436,66 @@ namespace DanilaChat
                 textBoxLocation.Y);
         }
 
+        private void TextBox_TextChanged1(object sender, EventArgs e)
+        {
+            while (scrollPanel.Controls.Count > 0)
+            {
+                scrollPanel.Controls.RemoveAt(0);
+            }
+
+            TextBox textBox = (TextBox)sender;
+
+            if (textBox.Text == "")
+            {
+                List<Human> listFriend = friend.Values.ToList();
+
+                foreach (Human currentFriend in listFriend)
+                {
+                    ShowConversationPanel(currentFriend);
+                }
+
+                return;
+            }
+
+            string[] words = textBox.Text.Split();
+            
+
+            IEnumerable<Human> resultSet = null;
+
+            foreach (var current in words)
+            {
+                if (current == "") continue;
+
+                var mans = 
+                    from man in friend.Values
+                        where
+                        (man.Name.ToLower().
+                        StartsWith(current.ToLower())) 
+                         ||
+                        (man.Surname.ToLower().
+                        StartsWith(current.ToLower()))
+                        select friend[man.UserId];
+
+                if (resultSet == null)
+                {
+                    resultSet = mans;
+                }
+                else
+                {
+                    resultSet = resultSet.Union(mans);
+                }
+                                
+            }
+
+            List<Human> resultList = resultSet.ToList();
+
+            foreach (Human current in resultList)
+            {
+                ShowConversationPanel(current);
+            }
+
+        }
+
         private static void PlusPicture_Click(object sender, EventArgs e)
         {
             AddScreen = new AddFriendScreen();
@@ -440,7 +525,7 @@ namespace DanilaChat
         private void CirclePicture_Paint(object sender, PaintEventArgs e)
         {
             Control control = (Control)sender;
-            
+
             SolidBrush brush = new SolidBrush(backColor);
 
             Graphics g = e.Graphics;
@@ -457,8 +542,11 @@ namespace DanilaChat
             else shadowLabel.Hide();
         }
 
+
+        bool aLotOfDownloaded;
+
         void ShowListOfConversation(int countConversation, string[] answer)
-        {          
+        {
             int beginIndex = 2;
             BottomPanelShow();
 
@@ -472,26 +560,32 @@ namespace DanilaChat
 
             Body.Controls.Add(scrollPanel);
 
+            aLotOfDownloaded = true;
             beginIndex = 8;
+
             for (int i = 0; i < countConversation; i++)
             {
-                Human currentFriend = new Human();               
-           
+                Human currentFriend = new Human();
+
                 currentFriend = Human.Parse(answer, beginIndex);
                 int numberOfUnread = int.Parse(answer[beginIndex + 6]);
 
                 ShowConversationPanel(currentFriend);
                 beginIndex += 7;
             }
+
+            aLotOfDownloaded = false;
             scrollPanel.ContentAdded = false;
-            
+
             ClientSocketHandler.BeginRecive();
         }
 
         public void ShowConversationPanel(Human currentFriend)
         {
-            
-            double ratio = 13 / 8.0;           
+            if (!aLotOfDownloaded)
+                scrollPanel.ContentAdded = true; 
+
+            double ratio = 13 / 8.0;
 
             friend[currentFriend.UserId] = currentFriend;
 
@@ -506,10 +600,10 @@ namespace DanilaChat
             conversationPanel.Location =
                 new Point(0, topPanel);
             conversationPanel.BackColor = Color.White;
-    
-        
-           AvatarBox avatarImage = new AvatarBox();
-           avatarImage.Image = Properties.Resources.AvatarDefault;
+
+
+            AvatarBox avatarImage = new AvatarBox();
+            avatarImage.Image = Properties.Resources.AvatarDefault;
             avatarImage.SizeMode = PictureBoxSizeMode.StretchImage;
 
             int length = (int)(conversationPanel.Height / ratio);
@@ -564,6 +658,9 @@ namespace DanilaChat
 
             AddPanel addConversation = scrollPanel.Controls.Add;
             Invoke(addConversation, conversationPanel);
+
+            if (!aLotOfDownloaded)
+                scrollPanel.ContentAdded = false;
         }
 
         private void ConversationPanel_Click(object sender, EventArgs e)
@@ -593,8 +690,8 @@ namespace DanilaChat
                 id1 = id2;
                 id2 = temp;
             }
-             
-            ClientSocketHandler.SendToServer("Read " + id1 + " " + id2 + " 0");         
+
+            ClientSocketHandler.SendToServer("Read " + id1 + " " + id2 + " 0");
         }
 
         SolidBrush brush = new SolidBrush(Color.White);
@@ -641,7 +738,12 @@ namespace DanilaChat
         BunifuMetroTextbox lastnameTextBox;
         BunifuMetroTextbox firstnameTextBox;
         ComboBox dayDrop, monthDrop, yearDrop;
+
         RadioButton male;
+        RadioButton female;
+
+        Label lastnameShadowLabel;
+        Label firstnameShadowLabel;
 
         void ShowRegestrationChat()
         {
@@ -654,12 +756,12 @@ namespace DanilaChat
             headerLabel.Dock = DockStyle.None;
             headerLabel.TextAlign = ContentAlignment.MiddleCenter;
             headerLabel.Font = boldChatFont;
-            headerLabel.AutoSize = true;                
+            headerLabel.AutoSize = true;
 
             Body.Controls.Add(headerLabel);
             int headerLeft = GetLeftPosition(headerLabel.Width, Body.Width);
             headerLabel.Location = new Point(headerLeft, bodyPadding);
-        
+
 
             Label noteLabel = new Label();
             noteLabel.Text =
@@ -691,7 +793,25 @@ namespace DanilaChat
             lastnameTextBox.Location = new Point(
                 leftPosition,
                 Body.Controls[Body.Controls.Count - 1].Bottom + heighPadding);
+            lastnameTextBox.OnValueChanged += LastnameTextBox_OnValueChanged;
 
+
+            int middle = lastnameTextBox.Top + 
+                (int)(lastnameTextBox.Height / 3.0) - 1;
+
+            int shadowLeft = lastnameTextBox.Left + 3 * heighPadding - 1;
+
+            lastnameShadowLabel = new Label();
+            lastnameShadowLabel.Text = "Ваша фамилия";
+            lastnameShadowLabel.Font = chatFont;
+            lastnameShadowLabel.BackColor = Color.White;
+            lastnameShadowLabel.AutoSize = true;
+            lastnameShadowLabel.Enabled = false;
+            lastnameShadowLabel.Location = 
+                new Point(shadowLeft, middle);
+            lastnameShadowLabel.BringToFront();
+
+            Body.Controls.Add(lastnameShadowLabel);
             Body.Controls.Add(lastnameTextBox);
 
 
@@ -705,9 +825,26 @@ namespace DanilaChat
             firstnameTextBox.BorderColorMouseHover = blueColor;
             firstnameTextBox.Size = sizeRegestrationTextBox;
             firstnameTextBox.Location = new Point(
-                leftPosition, 
+                leftPosition,
                 Body.Controls[Body.Controls.Count - 1].Bottom + heighPadding);
+            firstnameTextBox.OnValueChanged += FirstnameTextBox_OnValueChanged;
 
+            middle = firstnameTextBox.Top +
+                (int)(firstnameTextBox.Height / 3.0) - 1;
+
+            shadowLeft = firstnameTextBox.Left + 3 * heighPadding - 1;
+
+            firstnameShadowLabel = new Label();
+            firstnameShadowLabel.Text = "Ваше имя";
+            firstnameShadowLabel.Font = chatFont;
+            firstnameShadowLabel.BackColor = Color.White;
+            firstnameShadowLabel.AutoSize = true;
+            firstnameShadowLabel.Enabled = false;
+            firstnameShadowLabel.Location =
+                new Point(shadowLeft, middle);
+            firstnameShadowLabel.BringToFront();
+
+            Body.Controls.Add(firstnameShadowLabel);
             Body.Controls.Add(firstnameTextBox);
 
             Label brithdayLabel = new Label();
@@ -715,7 +852,7 @@ namespace DanilaChat
             brithdayLabel.Font = chatFont;
             brithdayLabel.ForeColor = grayColor;
             brithdayLabel.Location = new Point(
-                leftPosition, 
+                leftPosition,
                 Body.Controls[Body.Controls.Count - 1].Bottom + heighPadding);
 
             Body.Controls.Add(brithdayLabel);
@@ -726,21 +863,22 @@ namespace DanilaChat
 
             dayDrop = new ComboBox();
             dayDrop.DropDownStyle = ComboBoxStyle.DropDown;
-            
+
             dayDrop.Location = new Point(
-                leftPosition, 
+                leftPosition,
                 Body.Controls[Body.Controls.Count - 1].Bottom + heighPadding);
             DropDownComplete(dayDrop, "День", 1, 31);
 
             Body.Controls.Add(dayDrop);
             dayDrop.Width = 6 * ratio;
 
-            double ratioDropDown =2.376;
+            double ratioDropDown = 2.376;
             int dropDownHeight = (int)((double)Body.Height / ratioDropDown);
             dayDrop.DropDownHeight = dropDownHeight;
 
 
             monthDrop = new ComboBox();
+            monthDrop.Tag = "month";
             monthDrop.DropDownStyle = ComboBoxStyle.DropDown;
             monthDrop.Location = new Point
                 (Body.Controls[Body.Controls.Count - 1].Right + (ratio),
@@ -767,7 +905,7 @@ namespace DanilaChat
             genderLabel.Font = chatFont;
             genderLabel.ForeColor = grayColor;
             genderLabel.Location = new Point(
-                leftPosition, 
+                leftPosition,
                 Body.Controls[Body.Controls.Count - 1].Bottom + heighPadding);
 
             Body.Controls.Add(genderLabel);
@@ -784,7 +922,7 @@ namespace DanilaChat
             Body.Controls.Add(male);
 
 
-            RadioButton female = new RadioButton();
+            female = new RadioButton();
             female.Font = boldChatFont;
             female.Text = "Женский";
             female.Location = new Point
@@ -813,13 +951,29 @@ namespace DanilaChat
             continueButton.IdleCornerRadius = 7;
 
             continueButton.Location = new Point(
-                leftPosition, 
+                leftPosition,
                 Body.Controls[Body.Controls.Count - 1].Bottom + heighPadding);
             Body.Controls.Add(continueButton);
             continueButton.Size = new Size(268, 45);
 
             continueButton.Click += ContinueButton_Click;
-        }       
+        }
+
+        private void LastnameTextBox_OnValueChanged(object sender, EventArgs e)
+        {
+            if (lastnameTextBox.Text == "")
+                lastnameShadowLabel.Show();
+            else
+                lastnameShadowLabel.Hide();
+        }
+
+        private void FirstnameTextBox_OnValueChanged(object sender, EventArgs e)
+        {
+            if (firstnameTextBox.Text == "")
+                firstnameShadowLabel.Show();
+            else
+                firstnameShadowLabel.Hide();
+        }
 
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
@@ -828,16 +982,33 @@ namespace DanilaChat
 
         private void ContinueButton_Click(object sender, EventArgs e)
         {
+            if (firstnameTextBox.Text.Contains(" ")
+                || lastnameTextBox.Text.Contains(" "))
+            {
+                firstnameTextBox.Text = "";
+                lastnameTextBox.Text = "";
+
+                return;
+            }
+
+            if (yearDrop.SelectedIndex == 0 
+                || monthDrop.SelectedIndex == 0 
+                || dayDrop.SelectedIndex == 0
+                || firstnameTextBox.Text == ""
+                || lastnameTextBox.Text == ""
+                || !(male.Checked || female.Checked))
+                return;
+
             I = new Human();
 
             I.UserId = -1;
             I.Name = firstnameTextBox.Text;
-            I.Surname = lastnameTextBox.Text;
+            I.Surname = lastnameTextBox.Text;           
 
             I.Brithday = new DateTime(
                 (int)yearDrop.SelectedItem, 
                 monthDrop.SelectedIndex, 
-                dayDrop.SelectedIndex);
+                dayDrop.SelectedIndex);                               
 
             I.Gender = (male.Checked) ? "male" : "female";
 
@@ -1011,6 +1182,19 @@ namespace DanilaChat
             string login = loginTextbox.Text;
             string password = passwordTextbox.Text;
 
+            if (login.Contains(" ")
+                || password.Contains(" "))
+            {
+                loginTextbox.Text = "";
+                passwordTextbox.Text = "";
+            }
+
+            if (loginTextbox.Text == ""
+                || passwordTextbox.Text == "")
+            {
+                return;
+            }
+                
             ClientSocketHandler.SendToServer
                 ("Regestration " + login + " " + password + " " + I.ToString());
             string answer = ClientSocketHandler.WaitReciveFromServer();

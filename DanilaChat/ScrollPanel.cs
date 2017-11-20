@@ -77,7 +77,7 @@ namespace DanilaChat
         }
 
 
-        private void ScrollBar_Scroll(object sender, ScrollEventArgs e)
+        protected void ScrollBar_Scroll(object sender, ScrollEventArgs e)
         {            
             int shift = old_position - scrollBar.Value;
             ChangeDisplayArea(shift);

@@ -143,6 +143,7 @@ namespace DanilaChatServer
             if (!reader.Read())
             {
                 answer.Add("Invalid");
+                reader.Close();
                 return answer;
             }
 
@@ -157,16 +158,15 @@ namespace DanilaChatServer
                 answer.Add(user.ToString());
                 
                 readListOfConversation(user.UserId, answer);
-                reader.Close();
                 answer[0] += " " + (answer.Count - 2);
-                return answer;
             }
             else
             {
-                reader.Close();
                 answer.Add("Invalid");
-                return answer;
             }
+
+            reader.Close();
+            return answer;
         }
 
         static Human readUserFromReader(OleDbDataReader reader, Human user)

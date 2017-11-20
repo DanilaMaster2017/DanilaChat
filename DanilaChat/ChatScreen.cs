@@ -103,10 +103,14 @@ namespace DanilaChat
 
             Body.Controls.Add(scrollPanel);
 
-            scrollPanel.TopUpControl = scrollPanel.Height;
-            scrollPanel.BottomDownControl = scrollPanel.Height;
+            FormClosed += ChatScreen_FormClosed;
 
             ShowMessages(messages);
+        }
+
+        private void ChatScreen_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            OpenDialog.Remove(friend.UserId);
         }
 
         private void ScrollPanel_requestDownload(object sender, EventArgs e)
@@ -231,20 +235,35 @@ namespace DanilaChat
                 (scrollPanel.Width, messagePanel.Height + 2 * paddingContainer);
             // containerPanel.Padding = new Padding(paddingContainer);
 
-            if (inUp)
+            if (scrollPanel.TopControl == null)
             {
                 containerPanel.Location = new Point
-                    (0, scrollPanel.TopUpControl - containerPanel.Height);
+                    (0, scrollPanel.Height - containerPanel.Height);
 
-                scrollPanel.TopUpControl = containerPanel.Top;
+                scrollPanel.TopControl = containerPanel;
+                scrollPanel.BottomControl = containerPanel;
             }
             else
             {
-                containerPanel.Location = new Point
-                    (0, scrollPanel.BottomDownControl);
+                if (inUp)
+                {
+                    containerPanel.Location = new Point
+                        (0, scrollPanel.TopControl.Top - containerPanel.Height);
 
-                scrollPanel.BottomDownControl = containerPanel.Bottom;
-            }            
+                    scrollPanel.TopControl = containerPanel;
+                }
+                else
+                {
+                    containerPanel.Location = new Point
+                        (0, scrollPanel.BottomControl.Bottom);
+
+                    scrollPanel.Top -= containerPanel.Height;
+                    scrollPanel.Height += containerPanel.Height;
+
+                    scrollPanel.BottomControl = containerPanel;
+                }
+            }
+                 
 
             int avatarPadding = (int)(avatarSize / 5.0);
 

@@ -18,13 +18,14 @@ namespace DanilaChat
         PictureBox resetPicture;
         Color lineColor = Color.FromArgb(237, 237, 237);
 
-        double millimetr;
-
-        // доработать text box
+        double unit;
 
         int countQuery = 0;
         bool downloaded = true;
         bool endCommon = false;
+
+        ComboBox fromAgeDrop;
+        ComboBox toAgeDrop;
 
         public AddFriendScreen()
         {          
@@ -32,12 +33,12 @@ namespace DanilaChat
 
             double ratio = 1 / 94.0;
 
-            millimetr = Width * ratio;
-            int padding = (int)(millimetr * 5);
+            unit = Width * ratio;
+            int padding = (int)(unit * 5);
 
             Width = (int)(Width * 2.9);
             Height = (int)(Height * 1.5);
-            millimetr *= 1.5; 
+            unit *= 1.5; 
 
 
             leftPanel = new Panel();
@@ -49,7 +50,7 @@ namespace DanilaChat
 
             Panel firstPanel = new Panel();
             firstPanel.BackColor = Color.FromArgb(250, 251, 252);
-            firstPanel.Size = new Size(leftPanel.Width, (int)(13.5 * millimetr));
+            firstPanel.Size = new Size(leftPanel.Width, (int)(13.5 * unit));
 
             leftPanel.Controls.Add(firstPanel);
 
@@ -57,7 +58,7 @@ namespace DanilaChat
             peopleLable.Text = "Люди  ";
             peopleLable.Font = new Font("Tahoma", 10, FontStyle.Bold);
             peopleLable.AutoSize = true;
-            peopleLable.Location = new Point(padding, (int)(5 * millimetr));
+            peopleLable.Location = new Point(padding, (int)(5 * unit));
 
             firstPanel.Controls.Add(peopleLable);
 
@@ -78,7 +79,7 @@ namespace DanilaChat
             firstPanel.Controls.Add(firstLine);
 
             Panel secondPanel = new Panel();
-            secondPanel.Size = new Size(leftPanel.Width, (int)(11.0 * millimetr));
+            secondPanel.Size = new Size(leftPanel.Width, (int)(11.0 * unit));
             secondPanel.Location = new Point(0, firstPanel.Bottom + 1);
 
             leftPanel.Controls.Add(secondPanel);
@@ -87,7 +88,7 @@ namespace DanilaChat
             searchPicture.Image = Properties.Resources.search;
             searchPicture.SizeMode = PictureBoxSizeMode.StretchImage;
             searchPicture.Size = new Size
-                ((int)(4.8 * millimetr), (int)(4.8 * millimetr));
+                ((int)(4.8 * unit), (int)(4.8 * unit));
             int topImage = GetLeftPosition(searchPicture.Height, secondPanel.Height);
             searchPicture.Location = new Point(padding, topImage);
 
@@ -98,7 +99,7 @@ namespace DanilaChat
             resetPicture.Image = Properties.Resources.reset;
             resetPicture.SizeMode = PictureBoxSizeMode.StretchImage;
             resetPicture.Size = new Size
-                ((int)(3.5 * millimetr), (int)(3.5 * millimetr));
+                ((int)(3.5 * unit), (int)(3.5 * unit));
             topImage = GetLeftPosition(resetPicture.Height, secondPanel.Height);
             resetPicture.Location = new Point
                 (secondPanel.Width - resetPicture.Width - padding, topImage);
@@ -178,13 +179,14 @@ namespace DanilaChat
 
             int dropWidth = (int)(rightPanel.Width / 2.5);
 
-            ComboBox  fromAgeDrop = new ComboBox();
+            fromAgeDrop = new ComboBox();
             fromAgeDrop.DropDownStyle = ComboBoxStyle.DropDown;
             fromAgeDrop.Width = dropWidth;
             bottomLastControl =
                 rightPanel.Controls[rightPanel.Controls.Count - 1].Bottom;
             fromAgeDrop.Location = new Point(padding, bottomLastControl + padding);
             DropDownComplete(fromAgeDrop, "От", 14, 80);
+            fromAgeDrop.SelectedIndexChanged += FromAgeDrop_SelectedIndexChanged;
 
             rightPanel.Controls.Add(fromAgeDrop);
 
@@ -196,12 +198,13 @@ namespace DanilaChat
                 (fromAgeDrop.Right + 1, fromAgeDrop.Top);
             rightPanel.Controls.Add(separatorLabel);
 
-            ComboBox toAgeDrop = new ComboBox();
+            toAgeDrop = new ComboBox();
             toAgeDrop.Width = dropWidth;
             toAgeDrop.DropDownStyle = ComboBoxStyle.DropDown;
             toAgeDrop.Location = new Point
                 (separatorLabel.Right + 1, fromAgeDrop.Top);
             DropDownComplete(toAgeDrop, "До", 14, 80);
+            toAgeDrop.SelectedIndexChanged += ToAgeDrop_SelectedIndexChanged;
 
             rightPanel.Controls.Add(toAgeDrop);
 
@@ -286,6 +289,50 @@ namespace DanilaChat
 
         }
 
+        bool valueChanged = false;
+
+        private void ToAgeDrop_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (valueChanged) return;
+
+            int selectItem;
+            ComboBox toAgeDrop = (ComboBox)sender;
+
+            if (toAgeDrop.SelectedIndex == 0)
+            {
+                selectItem = 80;
+            }
+            else
+            {
+                selectItem = (int)toAgeDrop.SelectedItem;
+            }
+
+            valueChanged = true;
+            DropDownComplete(fromAgeDrop, "От", 14, selectItem);
+            valueChanged = false;
+        }
+
+        private void FromAgeDrop_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (valueChanged) return;
+
+            int selectItem;
+            ComboBox fromAgeDrop = (ComboBox)sender;
+
+            if (fromAgeDrop.SelectedIndex == 0)
+            {
+                selectItem = 14;
+            }
+            else
+            {
+                selectItem = (int)fromAgeDrop.SelectedItem;
+            }
+
+            valueChanged = true;
+            DropDownComplete(toAgeDrop, "До", selectItem, 80);
+            valueChanged = false;
+        }
+
         private void ScrollPanel_requestDownload(object sender, EventArgs e)
         {
             if (downloaded || endCommon) return;
@@ -300,7 +347,7 @@ namespace DanilaChat
             SuspendLayout();
             scrollPanel.ContentAdded = true;
 
-            int topPadding = (int)(4.85 * millimetr);
+            int topPadding = (int)(4.85 * unit);
             int beginIndex;
 
             if (people[people.Length - 1] == "e") endCommon = true;
@@ -318,7 +365,7 @@ namespace DanilaChat
                 }
 
                 Panel usersPanel = new Panel();
-                usersPanel.Size = new Size(scrollPanel.Width, (int)(25.65 * millimetr));
+                usersPanel.Size = new Size(scrollPanel.Width, (int)(25.65 * unit));
 
                 int lastPanelBottom;
                 if (scrollPanel.Controls.Count == 0)
@@ -337,7 +384,7 @@ namespace DanilaChat
                 if (currentUser.Avatar == null)
                     avatar.Image = Properties.Resources.AvatarDefault;
                 avatar.SizeMode = PictureBoxSizeMode.StretchImage;
-                avatar.Size = new Size((int)(19 * millimetr), (int)(19 * millimetr));
+                avatar.Size = new Size((int)(19 * unit), (int)(19 * unit));
 
                 int topAvatar = GetLeftPosition(avatar.Height, usersPanel.Height);
                 avatar.Location = new Point(topAvatar, topAvatar);
@@ -352,7 +399,7 @@ namespace DanilaChat
                 nameLabel.AutoSize = true;
                 nameLabel.TextAlign = ContentAlignment.BottomCenter;
 
-                int leftPadding = (int)(3 * millimetr);
+                int leftPadding = (int)(3 * unit);
                 nameLabel.Location = new Point
                     (avatar.Right + leftPadding, (int)(topPadding * 1.25));
 
@@ -361,7 +408,7 @@ namespace DanilaChat
                 BunifuThinButton2 addButton = new BunifuThinButton2();
                 addButton.ButtonText = "Добавить собеседника";
                 addButton.Size = new Size
-                    ((int)(56.22 * millimetr), (int)(13.5 * millimetr));
+                    ((int)(56.22 * unit), (int)(13.5 * unit));
                 addButton.Font = chatFont;
 
                 addButton.BackColor = Color.White;
@@ -405,7 +452,7 @@ namespace DanilaChat
             Control control = (Control)sender;
             Human newFriend = (Human)control.Tag;
 
-            Form1.AddFriend = newFriend;
+            AddFriend = newFriend;
             ClientSocketHandler.SendToServer("AddFriend " + newFriend.UserId);
 
             Close();
